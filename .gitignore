@@ -1,0 +1,11 @@
+users
+templates/*/
+locale/*.zip
+*.missing
+*~
+
+/.htaccess
+/build.xml
+/.DS_Store
+/.settings
+/spool
