@@ -7,43 +7,36 @@ use Data::Dumper;
 use Module::Load;
 use CPAN::Version;
 
-
 # At the moment, we only take care of Debian.
 # The dist.json only contains Debian packages.
 
-
 my %pkg_manager_map = (
-    debian   => "aptitude",
-    ubuntu   => "aptitude",
-    opensuse => "zypper",
+	debian   => "aptitude",
+	ubuntu   => "aptitude",
+	opensuse => "zypper",
 );
 
 my %cpanm_packages = (
-    debian   => "cpanminus make",
-    ubuntu   => "cpanminus make",
-    opensuse => "perl-App-cpanminus make",
+	debian   => "cpanminus make",
+	ubuntu   => "cpanminus make",
+	opensuse => "perl-App-cpanminus make",
 );
-
 my $cpan_install_cmd = "cpanm";
-
-
 
 # We use plain Perl, no requirements:
 say "Content-type: text/html";
-
 
 our $enable_setup_check = 1;
 
 eval { require "sql-ledger.conf" };
 
-if (!$enable_setup_check) {
-    say "Status: 403 Forbidden\n";
-    say "\n<h1>Forbidden</h1>";
-    exit;
+if ( !$enable_setup_check ) {
+	say "Status: 403 Forbidden\n";
+	say "\n<h1>Forbidden</h1>";
+	exit;
 }
 
 print "\n";
-
 
 say qq|<!DOCTYPE html>
 <html>
@@ -102,18 +95,15 @@ as Perl modules / distribution packages / executables).
 </p>
 |;
 
-
-my ($os_pretty_name, $os_name, $os_version) = get_os_release();
-
+my ( $os_pretty_name, $os_name, $os_version ) = get_os_release();
 
 say "<p>Your operating system: <b>$os_pretty_name</b>.</p>";
 
-if ($os_name eq "unknown") {
+if ( $os_name eq "unknown" ) {
 
-    say "<p>Sorry, we cannot handle unknown Linuxes :-(</p>";
-    exit 1;
+	say "<p>Sorry, we cannot handle unknown Linuxes :-(</p>";
+	exit 1;
 }
-
 
 say qq|
 <p>
@@ -141,47 +131,37 @@ to &nbsp;<span class="tt">sql-ledger.conf</span>!
 <hr/><br/>
 |;
 
-
-
-
-
-
 my $dist = parse_config();
-
 
 my @missing_cpan_modules;
 my @missing_dist_packages;
-
 
 say "<table  class='result'>";
 
 foreach my $r (@$dist) {
 
-    my $result = check_requirement($r);
-    
-    say "<tr>";
+	my $result = check_requirement($r);
 
-    say "<td>$result->{desc}</td>";
+	say "<tr>";
 
-    my $css_class = $result->{ok} ? 'ok' : 'fail';
+	say "<td>$result->{desc}</td>";
 
-    say "<td class='$css_class'>$result->{info}</td>";
-    
-    say "</tr>";
+	my $css_class = $result->{ok} ? 'ok' : 'fail';
+
+	say "<td class='$css_class'>$result->{info}</td>";
+
+	say "</tr>";
 }
 
 say "</table>";
 
-
-if (@missing_dist_packages || @missing_cpan_modules) {
-    say "<br/><hr/>";
+if ( @missing_dist_packages || @missing_cpan_modules ) {
+	say "<br/><hr/>";
 }
-
-
 
 if (@missing_dist_packages) {
 
-    say qq|
+	say qq|
 <p>Install missing distribution packages with:</p>
 <div class='install_hint'>
 $pkg_manager_map{$os_name} install @missing_dist_packages
@@ -191,7 +171,7 @@ $pkg_manager_map{$os_name} install @missing_dist_packages
 
 if (@missing_cpan_modules) {
 
-    say qq|
+	say qq|
 <p>Install missing CPAN modules with:</p>
 <div class='install_hint'>
 $cpan_install_cmd @missing_cpan_modules
@@ -199,151 +179,138 @@ $cpan_install_cmd @missing_cpan_modules
 |;
 }
 
-
-
 say qq|
 </body>
 </html>
 |;
 
-
 exit 0;
 
-
-
 ################################# End main #################################
-
-
 
 ####################
 sub get_os_release {
 ####################
-    open(my $osrelease, "<", "/etc/os-release") ||
-        return ("unknown", "unknown", "unknown");
+	open( my $osrelease, "<", "/etc/os-release" )
+	  || return ( "unknown", "unknown", "unknown" );
 
-    my %keys;
-    
-    while (<$osrelease>) {
-        m/^(\w+)=["']?(.+?)["']?$/;
-        $keys{$1} = $2;
-    }
+	my %keys;
 
-    return ($keys{PRETTY_NAME}, $keys{ID}, $keys{VERSION_ID});
+	while (<$osrelease>) {
+		m/^(\w+)=["']?(.+?)["']?$/;
+		$keys{$1} = $2;
+	}
+
+	return ( $keys{PRETTY_NAME}, $keys{ID}, $keys{VERSION_ID} );
 }
-
-
 
 ##################
 sub parse_config {
 ##################
-    local $/;
-    open( my $conf, '<', 'dist.json' );
-    my $json_text   = <$conf>;
-    close $conf;
-    return decode_json( $json_text );
+	local $/;
+	open( my $conf, '<', 'dist.json' );
+	my $json_text = <$conf>;
+	close $conf;
+	return decode_json($json_text);
 }
-
-
 
 #######################
 sub check_requirement {
 #######################
-    my $r = shift;
+	my $r = shift;
 
-    my %type_map = (
-        perlmodule => "Perl module",
-        executable => "Executable",
-    );
+	my %type_map = (
+		perlmodule => "Perl module",
+		executable => "Executable",
+	);
 
-    
-    if ($r->{type} eq "perlmodule") {
+	if ( $r->{type} eq "perlmodule" ) {
 
-        my $loadable   = 0;
-        my $version_ok = 0;
-        my $info;
-        
-        eval { load $r->{name} };
+		my $loadable   = 0;
+		my $version_ok = 0;
+		my $info;
 
-        $loadable = 1 unless $@;
-        
-        if ($loadable) {
-            my $version = "$r->{name}"->VERSION();
+		eval { load $r->{name} };
 
-            if (CPAN::Version->vcmp($version, $r->{version}) >= 0) {
-                # 1: first is larger, 0: equal
-                
-                $version_ok = 1;
-                $info = "Installed version: $version";
-            }
-            else {
-                $info = "Installed in version $version, " .
-                    "but we need $r->{version}";
-            }
-        }
-        else {
-            $info = "Not installed";
-        }
+		$loadable = 1 unless $@;
 
-        if (!$loadable || !$version_ok) {
-            if (my $p = get_package($r)) {
-                push @missing_dist_packages, $p;
-            }
-            else {
-                push @missing_cpan_modules,
-                    $r->{name} . ($r->{version} ne "0"? "\@$r->{version}" : "");
-            }
-        }
+		if ($loadable) {
+			my $version = "$r->{name}"->VERSION();
 
-        return {
-            desc => $type_map{ $r->{type} } . ": " . $r->{name},
-            ok   =>  $loadable && $version_ok,
-            info => $info,
-        }
-    }
-    
-    elsif ($r->{type} eq "executable") {
+			if ( CPAN::Version->vcmp( $version, $r->{version} ) >= 0 ) {
 
-        my $is_in_path = 0;
-        my $info;
+				# 1: first is larger, 0: equal
 
-        my @found;
-        if (@found = grep { -x "$_/$r->{name}" } split /:/, $ENV{PATH}) {
-            $is_in_path = 1;
-        }
+				$version_ok = 1;
+				$info       = "Installed version: $version";
+			}
+			else {
+				$info = "Installed in version $version, "
+				  . "but we need $r->{version}";
+			}
+		}
+		else {
+			$info = "Not installed";
+		}
 
-        if ($is_in_path) {
-            $info = "$r->{name} is in $found[0]";
-        }
-        else {
-            $info = "Not found";
-            if (my $p = get_package($r)) {
-                push @missing_dist_packages, $p;
-            }
-            else {
-                die "No package configured";
-            }
-        }
-        
-        return {
-            desc => $type_map{ $r->{type} } . ": " . $r->{name},
-            ok   =>  $is_in_path,
-            info => $info,
-        }
-    }
-    else {
-        die "Unknown type";
-    }
+		if ( !$loadable || !$version_ok ) {
+			if ( my $p = get_package($r) ) {
+				push @missing_dist_packages, $p;
+			}
+			else {
+				push @missing_cpan_modules,
+				  $r->{name}
+				  . ( $r->{version} ne "0" ? "\@$r->{version}" : "" );
+			}
+		}
+
+		return {
+			desc => $type_map{ $r->{type} } . ": " . $r->{name},
+			ok   => $loadable && $version_ok,
+			info => $info,
+		};
+	}
+
+	elsif ( $r->{type} eq "executable" ) {
+
+		my $is_in_path = 0;
+		my $info;
+
+		my @found;
+		if ( @found = grep { -x "$_/$r->{name}" } split /:/, $ENV{PATH} ) {
+			$is_in_path = 1;
+		}
+
+		if ($is_in_path) {
+			$info = "$r->{name} is in $found[0]";
+		}
+		else {
+			$info = "Not found";
+			if ( my $p = get_package($r) ) {
+				push @missing_dist_packages, $p;
+			}
+			else {
+				die "No package configured";
+			}
+		}
+
+		return {
+			desc => $type_map{ $r->{type} } . ": " . $r->{name},
+			ok   => $is_in_path,
+			info => $info,
+		};
+	}
+	else {
+		die "Unknown type";
+	}
 }
-
-
 
 #################
 sub get_package {
 #################
-    my $r = shift;
+	my $r = shift;
 
-    if ( $r->{package} ) {
-        return $r->{package}{"$os_name$os_version"}
-            // $r->{package}{$os_name};
-    }
+	if ( $r->{package} ) {
+		return $r->{package}{"$os_name$os_version"} // $r->{package}{$os_name};
+	}
 }

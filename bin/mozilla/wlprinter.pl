@@ -39,7 +39,7 @@ sub open {
 		$serveraddress = $` . "/wlprinter";
 	}
 	my $serverUrl = "$serveraddress/server.pl?id=$userid";
-	my $jarUrl    = $externalclient ? $tekkiserver : "Wlprinter.jar";
+	my $jarUrl = $externalclient ? $tekkiserver : "Wlprinter.jar";
 
 	#print "Content-Type: text/plain\n\n";
 	print qq|Content-Type: application/x-java-jnlp-file

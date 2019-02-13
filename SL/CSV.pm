@@ -9,12 +9,11 @@
 
 package CSV;
 
-
 sub escape_csv {
-  my ($self, $str) = @_;
+	my ( $self, $str ) = @_;
 
-  $str =~ s/\"/\"\"/g;
-  return $str;
+	$str =~ s/\"/\"\"/g;
+	return $str;
 }
 
 1;

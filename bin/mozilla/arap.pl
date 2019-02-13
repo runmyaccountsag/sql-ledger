@@ -12,129 +12,159 @@
 
 use SL::AA;
 
-# any custom scripts for this one   
-if (-f "$form->{path}/custom_arap.pl") {
-    eval { require "$form->{path}/custom_arap.pl"; };
+# any custom scripts for this one
+if ( -f "$form->{path}/custom_arap.pl" ) {
+	eval { require "$form->{path}/custom_arap.pl"; };
 }
-if (-f "$form->{path}/$form->{login}_arap.pl") {
-    eval { require "$form->{path}/$form->{login}_arap.pl"; };
+if ( -f "$form->{path}/$form->{login}_arap.pl" ) {
+	eval { require "$form->{path}/$form->{login}_arap.pl"; };
 }
- 
 
 1;
+
 # end of main
 
-
 sub check_name {
-  my ($name) = @_;
+	my ($name) = @_;
 
-  my ($new_name, $new_id) = split /--/, $form->{$name};
-  my $rv = 0;
+	my ( $new_name, $new_id ) = split /--/, $form->{$name};
+	my $rv = 0;
 
-  # if we use a selection
-  if ($form->{"select$name"}) {
-    if ($form->{"old$name"} ne $form->{$name}) {
-      # this is needed for is, ir and oe
-      for (split / /, $form->{taxaccounts}) { delete $form->{"${_}_rate"} }
+	# if we use a selection
+	if ( $form->{"select$name"} ) {
+		if ( $form->{"old$name"} ne $form->{$name} ) {
 
-      # for credit calculations
-      $form->{oldinvtotal} = 0;
-      $form->{oldtotalpaid} = 0;
-      $form->{calctax} = 1;
-      
-      $form->{"${name}_id"} = $new_id;
-      AA->get_name(\%myconfig, \%$form);
+			# this is needed for is, ir and oe
+			for ( split / /, $form->{taxaccounts} ) {
+				delete $form->{"${_}_rate"};
+			}
 
-      $form->{$name} = $form->{"old$name"} = "$new_name--$new_id";
-      $form->{currency} =~ s/ //g;
-      $form->{cashdiscount} *= 100;
-      $form->{cashdiscount} = 0 if $form->{type} =~ /(debit|credit)_/;
-      # ISNA: 00022 tekki
-      $form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} = $form->{payment_accno};
-      # ISNA_end
+			# for credit calculations
+			$form->{oldinvtotal}  = 0;
+			$form->{oldtotalpaid} = 0;
+			$form->{calctax}      = 1;
 
-      # put employee together if there is a new employee_id
-      $form->{employee} = "$form->{employee}--$form->{employee_id}" if $form->{employee_id};
+			$form->{"${name}_id"} = $new_id;
+			AA->get_name( \%myconfig, \%$form );
 
-      $rv = 1;
-    }
-  } else {
+			$form->{$name} = $form->{"old$name"} = "$new_name--$new_id";
+			$form->{currency} =~ s/ //g;
+			$form->{cashdiscount} *= 100;
+			$form->{cashdiscount} = 0 if $form->{type} =~ /(debit|credit)_/;
 
-    my $dosearch;
-    # check name, combine name and id
-    if ($form->{"old$name"} ne qq|$form->{$name}--$form->{"${name}_id"}|) {
-      $form->{searchby} = "name";
-      $dosearch = 1;
-    }
+			# ISNA: 00022 tekki
+			$form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} =
+			  $form->{payment_accno};
 
-    if ($form->{"old${name}number"} ne $form->{"${name}number"}) {
-      $form->{searchby} = "$form->{vc}number";
-      $dosearch = 1;
-    }
+			# ISNA_end
 
-    if ($dosearch) {
+			# put employee together if there is a new employee_id
+			$form->{employee} = "$form->{employee}--$form->{employee_id}"
+			  if $form->{employee_id};
 
-      # this is needed for is, ir and oe
-      for (split / /, $form->{taxaccounts}) { delete $form->{"${_}_rate"} }
+			$rv = 1;
+		}
+	}
+	else {
 
-      # for credit calculations
-      $form->{oldinvtotal} = 0;
-      $form->{oldtotalpaid} = 0;
-      $form->{calctax} = 1;
+		my $dosearch;
 
-      # return one name or a list of names in $form->{name_list}
-      if (($rv = $form->get_name(\%myconfig, $name, $form->{transdate})) > 1) {
-	&select_name($name);
-	exit;
-      }
+		# check name, combine name and id
+		if ( $form->{"old$name"} ne qq|$form->{$name}--$form->{"${name}_id"}| )
+		{
+			$form->{searchby} = "name";
+			$dosearch = 1;
+		}
 
-      if ($rv == 1) {
-	# we got one name
-	$form->{"${name}_id"} = $form->{name_list}[0]->{id};
-	$form->{$name} = $form->{name_list}[0]->{name};
-	$form->{"${name}number"} = $form->{name_list}[0]->{"${name}number"};
-	$form->{"old$name"} = qq|$form->{$name}--$form->{"${name}_id"}|;
-	$form->{"old${name}number"} = $form->{"${name}number"};
+		if ( $form->{"old${name}number"} ne $form->{"${name}number"} ) {
+			$form->{searchby} = "$form->{vc}number";
+			$dosearch = 1;
+		}
 
-	AA->get_name(\%myconfig, \%$form);
-	
-	$form->{currency} =~ s/ //g;
-	# put employee together if there is a new employee_id
-	$form->{employee} = "$form->{employee}--$form->{employee_id}" if $form->{employee_id};
-	$form->{cashdiscount} *= 100;
-	$form->{cashdiscount} = 0 if $form->{type} =~ /(debit|credit)_/;
-	# ISNA: 00022 tekki
-	$form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} = $form->{payment_accno};
-	# ISNA_end
+		if ($dosearch) {
 
-      } else {
-	 # name is not on file
-	 $msg = ucfirst $name . " not on file!";
-	 $form->info($locale->text($msg));
+			# this is needed for is, ir and oe
+			for ( split / /, $form->{taxaccounts} ) {
+				delete $form->{"${_}_rate"};
+			}
 
-         # change callback
-         $form->{old_callback} = $form->escape($form->{callback},1);
-         $form->{callback} = $form->escape("$form->{script}?action=display_form",1);
+			# for credit calculations
+			$form->{oldinvtotal}  = 0;
+			$form->{oldtotalpaid} = 0;
+			$form->{calctax}      = 1;
 
-         # delete action
-         delete $form->{action};
+			# return one name or a list of names in $form->{name_list}
+			if (
+				(
+					$rv =
+					$form->get_name( \%myconfig, $name, $form->{transdate} )
+				) > 1
+			  )
+			{
+				&select_name($name);
+				exit;
+			}
 
-         # save all other form variables in a previousform variable
-         if (!$form->{previousform}) {
-	   foreach $key (keys %$form) {
+			if ( $rv == 1 ) {
 
-	   # escape ampersands
-           $form->{$key} =~ s/&/%26/g;
-           $form->{previousform} .= qq|$key=$form->{$key}&|;
-           }
-	   chop $form->{previousform};
-	   $form->{previousform} = $form->escape($form->{previousform}, 1);
-	 }
+				# we got one name
+				$form->{"${name}_id"} = $form->{name_list}[0]->{id};
+				$form->{$name} = $form->{name_list}[0]->{name};
+				$form->{"${name}number"} =
+				  $form->{name_list}[0]->{"${name}number"};
+				$form->{"old$name"} = qq|$form->{$name}--$form->{"${name}_id"}|;
+				$form->{"old${name}number"} = $form->{"${name}number"};
 
-	 $i = $form->{rowcount};
-	 for (qw(partnumber description)) { $form->{"${_}_$i"} = $form->quote($form->{"${_}_$i"}) }
- 
-         print qq|
+				AA->get_name( \%myconfig, \%$form );
+
+				$form->{currency} =~ s/ //g;
+
+				# put employee together if there is a new employee_id
+				$form->{employee} = "$form->{employee}--$form->{employee_id}"
+				  if $form->{employee_id};
+				$form->{cashdiscount} *= 100;
+				$form->{cashdiscount} = 0 if $form->{type} =~ /(debit|credit)_/;
+
+				# ISNA: 00022 tekki
+				$form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} =
+				  $form->{payment_accno};
+
+				# ISNA_end
+
+			}
+			else {
+
+				# name is not on file
+				$msg = ucfirst $name . " not on file!";
+				$form->info( $locale->text($msg) );
+
+				# change callback
+				$form->{old_callback} = $form->escape( $form->{callback}, 1 );
+				$form->{callback} =
+				  $form->escape( "$form->{script}?action=display_form", 1 );
+
+				# delete action
+				delete $form->{action};
+
+				# save all other form variables in a previousform variable
+				if ( !$form->{previousform} ) {
+					foreach $key ( keys %$form ) {
+
+						# escape ampersands
+						$form->{$key} =~ s/&/%26/g;
+						$form->{previousform} .= qq|$key=$form->{$key}&|;
+					}
+					chop $form->{previousform};
+					$form->{previousform} =
+					  $form->escape( $form->{previousform}, 1 );
+				}
+
+				$i = $form->{rowcount};
+				for (qw(partnumber description)) {
+					$form->{"${_}_$i"} = $form->quote( $form->{"${_}_$i"} );
+				}
+
+				print qq|
 <form method=post action=ct.pl>
 <input type=hidden name=name value="$form->{$name}"><br/>
 <input type=submit name=action class=submit value='Add'>
@@ -143,50 +173,53 @@ sub check_name {
 <input type=hidden name=partnumber value="$form->{"partnumber_$i"}">
 <input type=hidden name=description value="$form->{"description_$i"}">
 |;
-         $form->hide_form(qw(previousform rowcount path login));
+				$form->hide_form(qw(previousform rowcount path login));
 
-         print qq|
+				print qq|
 </form>
 |;
-         exit;
-      }
-    }
-  }
+				exit;
+			}
+		}
+	}
 
-  &rebuild_formnames;
+	&rebuild_formnames;
 
-
-  $rv;
+	$rv;
 
 }
 
 # $locale->text('Customer not on file!')
 # $locale->text('Vendor not on file!')
 
-
 sub select_name {
-  my ($table) = @_;
+	my ($table) = @_;
 
-# $locale->text('Customer Number')
-# $locale->text('Vendor Number')
-# $locale->text('Employee Number')
+	# $locale->text('Customer Number')
+	# $locale->text('Vendor Number')
+	# $locale->text('Employee Number')
 
-  @column_index = qw(ndx name number address);
+	@column_index = qw(ndx name number address);
 
-  $label = ucfirst $table;
-  $labelnumber = "$label Number";
-  
-  $column_data{ndx} = qq|<th class=listheading width=1%>&nbsp;</th>|;
-  $column_data{number} = qq|<th class=listheading>|.$locale->text($labelnumber).qq|</th>|;
-  $column_data{name} = qq|<th class=listheading>|.$locale->text($label).qq|</th>|;
-  $column_data{address} = qq|<th class=listheading colspan=5>|.$locale->text('Address').qq|</th>|;
-  
-  # list items with radio button on a form
-  $form->header;
+	$label       = ucfirst $table;
+	$labelnumber = "$label Number";
 
-  $title = $locale->text('Select from one of the names below');
+	$column_data{ndx} = qq|<th class=listheading width=1%>&nbsp;</th>|;
+	$column_data{number} =
+	  qq|<th class=listheading>| . $locale->text($labelnumber) . qq|</th>|;
+	$column_data{name} =
+	  qq|<th class=listheading>| . $locale->text($label) . qq|</th>|;
+	$column_data{address} =
+	    qq|<th class=listheading colspan=5>|
+	  . $locale->text('Address')
+	  . qq|</th>|;
 
-  print qq|
+	# list items with radio button on a form
+	$form->header;
+
+	$title = $locale->text('Select from one of the names below');
+
+	print qq|
 <body>
 
 <form method=post action=$form->{script}>
@@ -201,42 +234,52 @@ sub select_name {
       <table width=100%>
 	<tr class=listheading>|;
 
-  for (@column_index) { print "\n$column_data{$_}" }
-  
-  print qq|
+	for (@column_index) { print "\n$column_data{$_}" }
+
+	print qq|
 	</tr>
 |;
 
-  @column_index = qw(ndx name number address city state zipcode country);
-  
-  my $i = 0;
-  foreach $ref (@{ $form->{name_list} }) {
-    $checked = ($i++) ? "" : "checked";
+	@column_index = qw(ndx name number address city state zipcode country);
 
-    $ref->{name} = $form->quote($ref->{name});
-    
-   $column_data{ndx} = qq|<td><input name=ndx class=radio type=radio value=$i $checked></td>|;
-   $column_data{number} = qq|<td><input name="new_${table}number_$i" type=hidden value="|.$form->quote($ref->{"${table}number"}).qq|">$ref->{"${table}number"}</td>|;
-   $column_data{name} = qq|<td><input name="new_name_$i" type=hidden value="|.$form->quote($ref->{name}).qq|">$ref->{name}</td>|;
-   $column_data{address} = qq|<td>$ref->{address1} $ref->{address2}</td>|;
-   for (qw(city state zipcode country)) { $column_data{$_} = qq|<td>$ref->{$_}&nbsp;</td>| }
-    
-    $j++; $j %= 2;
-    print qq|
+	my $i = 0;
+	foreach $ref ( @{ $form->{name_list} } ) {
+		$checked = ( $i++ ) ? "" : "checked";
+
+		$ref->{name} = $form->quote( $ref->{name} );
+
+		$column_data{ndx} =
+qq|<td><input name=ndx class=radio type=radio value=$i $checked></td>|;
+		$column_data{number} =
+		    qq|<td><input name="new_${table}number_$i" type=hidden value="|
+		  . $form->quote( $ref->{"${table}number"} )
+		  . qq|">$ref->{"${table}number"}</td>|;
+		$column_data{name} =
+		    qq|<td><input name="new_name_$i" type=hidden value="|
+		  . $form->quote( $ref->{name} )
+		  . qq|">$ref->{name}</td>|;
+		$column_data{address} = qq|<td>$ref->{address1} $ref->{address2}</td>|;
+		for (qw(city state zipcode country)) {
+			$column_data{$_} = qq|<td>$ref->{$_}&nbsp;</td>|;
+		}
+
+		$j++;
+		$j %= 2;
+		print qq|
 	<tr class=listrow$j>|;
 
-    for (@column_index) { print "\n$column_data{$_}" }
+		for (@column_index) { print "\n$column_data{$_}" }
 
-    print qq|
+		print qq|
 	</tr>
 
 <input name="new_id_$i" type=hidden value=$ref->{id}>
 
 |;
 
-  }
-  
-  print qq|
+	}
+
+	print qq|
       </table>
     </td>
   </tr>
@@ -249,18 +292,19 @@ sub select_name {
 
 |;
 
-  # delete variables
-  for (qw(nextsub name_list)) { delete $form->{$_} }
-  
-  $form->{action} = "name_selected";
-  
-  $form->hide_form;
+	# delete variables
+	for (qw(nextsub name_list)) { delete $form->{$_} }
 
-  print qq|
+	$form->{action} = "name_selected";
+
+	$form->hide_form;
+
+	print qq|
 <input type=hidden name=nextsub value=name_selected>
 <input type=hidden name=vc value=$table>
 <br>
-<input class=submit type=submit name=action value="|.$locale->text('Continue').qq|">
+<input class=submit type=submit name=action value="|
+	  . $locale->text('Continue') . qq|">
 </form>
 
 </body>
@@ -269,157 +313,169 @@ sub select_name {
 
 }
 
-
-
 sub name_selected {
 
-  # replace the variable with the one checked
+	# replace the variable with the one checked
 
-  # index for new item
-  $i = $form->{ndx};
-  
-  $form->{$form->{vc}} = $form->{"new_name_$i"};
-  $form->{"$form->{vc}_id"} = $form->{"new_id_$i"};
-  $form->{"old$form->{vc}"} = qq|$form->{$form->{vc}}--$form->{"$form->{vc}_id"}|;
-  $form->{"$form->{vc}number"} = $form->{"new_$form->{vc}number_$i"};
-  $form->{"old$form->{vc}number"} = $form->{"$form->{vc}number"};
+	# index for new item
+	$i = $form->{ndx};
 
-  # delete all the new_ variables
-  for $i (1 .. $form->{lastndx}) {
-    for (qw(id, name)) { delete $form->{"new_${_}_$i"} }
-    delete $form->{"new_$form->{vc}number_$i"};
-  }
-  
-  for (qw(ndx lastndx nextsub)) { delete $form->{$_} }
+	$form->{ $form->{vc} } = $form->{"new_name_$i"};
+	$form->{"$form->{vc}_id"} = $form->{"new_id_$i"};
+	$form->{"old$form->{vc}"} =
+	  qq|$form->{$form->{vc}}--$form->{"$form->{vc}_id"}|;
+	$form->{"$form->{vc}number"}    = $form->{"new_$form->{vc}number_$i"};
+	$form->{"old$form->{vc}number"} = $form->{"$form->{vc}number"};
 
-  # ISNA: 00022 tekki
-  #$arap_accno = $form->{$form->{ARAP}}; # {ARAP} is empty!
-  
-  AA->get_name(\%myconfig, \%$form);
+	# delete all the new_ variables
+	for $i ( 1 .. $form->{lastndx} ) {
+		for (qw(id, name)) { delete $form->{"new_${_}_$i"} }
+		delete $form->{"new_$form->{vc}number_$i"};
+	}
 
-  #$form->{$form->{ARAP}} ||= $arap_accno;
-  $form->{"old$form->{ARAP}"} = $form->{$form->{ARAP}};
-  $form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} = $form->{payment_accno};
-  # ISNA_end
+	for (qw(ndx lastndx nextsub)) { delete $form->{$_} }
 
-  # put employee together if there is a new employee_id
-  $form->{employee} = "$form->{employee}--$form->{employee_id}" if $form->{employee_id};
-  $form->{cashdiscount} *= 100;
-  $form->{cashdiscount} = 0 if $form->{type} =~ /(debit|credit)_/;
-  for (qw(terms discountterms)) { $form->{$_} = "" if ! $form->{$_} }
+	# ISNA: 00022 tekki
+	#$arap_accno = $form->{$form->{ARAP}}; # {ARAP} is empty!
 
-  &rebuild_formnames;
+	AA->get_name( \%myconfig, \%$form );
 
-  &update(1);
+	#$form->{$form->{ARAP}} ||= $arap_accno;
+	$form->{"old$form->{ARAP}"} = $form->{ $form->{ARAP} };
+	$form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} =
+	  $form->{payment_accno};
+
+	# ISNA_end
+
+	# put employee together if there is a new employee_id
+	$form->{employee} = "$form->{employee}--$form->{employee_id}"
+	  if $form->{employee_id};
+	$form->{cashdiscount} *= 100;
+	$form->{cashdiscount} = 0 if $form->{type} =~ /(debit|credit)_/;
+	for (qw(terms discountterms)) { $form->{$_} = "" if !$form->{$_} }
+
+	&rebuild_formnames;
+
+	&update(1);
 
 }
-
 
 sub rebuild_formnames {
 
-  $form->{selectformname} = $form->unescape($form->{selectformname});
+	$form->{selectformname} = $form->unescape( $form->{selectformname} );
 
-  if ($form->{remittancevoucher}) {
-    # add remittance voucher to formname
-    if (! ($form->{selectformname} =~ /remittance_voucher/)) {
-      $form->{selectformname} .= qq|\nremittance_voucher--|.$locale->text('Remittance Voucher');
-    }
-  } else {
-    if ($form->{selectformname} =~ /remittance_voucher/) {
-      $form->{selectformname} =~ s/\nremittance_voucher--.*//s;
-    }
-  }
+	if ( $form->{remittancevoucher} ) {
 
-  $form->{selectformname} = $form->escape($form->{selectformname},1);
+		# add remittance voucher to formname
+		if ( !( $form->{selectformname} =~ /remittance_voucher/ ) ) {
+			$form->{selectformname} .=
+			  qq|\nremittance_voucher--| . $locale->text('Remittance Voucher');
+		}
+	}
+	else {
+		if ( $form->{selectformname} =~ /remittance_voucher/ ) {
+			$form->{selectformname} =~ s/\nremittance_voucher--.*//s;
+		}
+	}
+
+	$form->{selectformname} = $form->escape( $form->{selectformname}, 1 );
 
 }
-
-
 
 sub rebuild_vc {
-  my ($vc, $ARAP, $transdate, $job) = @_;
+	my ( $vc, $ARAP, $transdate, $job ) = @_;
 
-  ($null, $form->{employee_id}) = split /--/, $form->{employee};
-  $form->all_vc(\%myconfig, $vc, $ARAP, undef, $transdate, $job);
-  $form->{"select$vc"} = "";
-  for (@{ $form->{"all_$vc"} }) { $form->{"select$vc"} .= qq|$_->{name} ($_->{"$form->{vc}number"})--$_->{id}\n| }
-  $form->{"select$vc"} = $form->escape($form->{"select$vc"},1);
-  
-  $form->{selectprojectnumber} = "";
-  if (@{ $form->{all_project} }) {
-    $form->{selectprojectnumber} = "\n";
-    for (@{ $form->{all_project} }) { $form->{selectprojectnumber} .= qq|$_->{projectnumber}--$_->{id}\n| }
-    $form->{selectprojectnumber} = $form->escape($form->{selectprojectnumber},1);
-  }
+	( $null, $form->{employee_id} ) = split /--/, $form->{employee};
+	$form->all_vc( \%myconfig, $vc, $ARAP, undef, $transdate, $job );
+	$form->{"select$vc"} = "";
+	for ( @{ $form->{"all_$vc"} } ) {
+		$form->{"select$vc"} .=
+		  qq|$_->{name} ($_->{"$form->{vc}number"})--$_->{id}\n|;
+	}
+	$form->{"select$vc"} = $form->escape( $form->{"select$vc"}, 1 );
 
-  1;
+	$form->{selectprojectnumber} = "";
+	if ( @{ $form->{all_project} } ) {
+		$form->{selectprojectnumber} = "\n";
+		for ( @{ $form->{all_project} } ) {
+			$form->{selectprojectnumber} .= qq|$_->{projectnumber}--$_->{id}\n|;
+		}
+		$form->{selectprojectnumber} =
+		  $form->escape( $form->{selectprojectnumber}, 1 );
+	}
+
+	1;
 
 }
-
-
 
 sub add_transaction {
 
-  $form->{action} = "add";
+	$form->{action} = "add";
 
-  $form->{callback} = $form->escape($form->{callback},1);
-  $argv = "";
-  for (keys %$form) { $argv .= "$_=$form->{$_}&" }
+	$form->{callback} = $form->escape( $form->{callback}, 1 );
+	$argv = "";
+	for ( keys %$form ) { $argv .= "$_=$form->{$_}&" }
 
-  $form->{callback} = "$form->{script}?$argv";
+	$form->{callback} = "$form->{script}?$argv";
 
-  $form->redirect;
-  
+	$form->redirect;
+
 }
-
-
 
 sub check_project {
 
-  for $i (1 .. $form->{rowcount}) {
-    $form->{"project_id_$i"} = "" unless $form->{"projectnumber_$i"};
-    if ($form->{"projectnumber_$i"} ne $form->{"oldprojectnumber_$i"}) {
-      if ($form->{"projectnumber_$i"}) {
-	# get new project
-	$form->{projectnumber} = $form->{"projectnumber_$i"};
-	if (($rows = PE->projects(\%myconfig, $form)) > 1) {
-	  # check form->{project_list} how many there are
-	  $form->{rownumber} = $i;
-	  &select_project;
-	  exit;
-	}
+	for $i ( 1 .. $form->{rowcount} ) {
+		$form->{"project_id_$i"} = "" unless $form->{"projectnumber_$i"};
+		if ( $form->{"projectnumber_$i"} ne $form->{"oldprojectnumber_$i"} ) {
+			if ( $form->{"projectnumber_$i"} ) {
 
-	if ($rows == 1) {
-	  $form->{"project_id_$i"} = $form->{project_list}->[0]->{id};
-	  $form->{"projectnumber_$i"} = $form->{project_list}->[0]->{projectnumber};
-	  $form->{"oldprojectnumber_$i"} = $form->{project_list}->[0]->{projectnumber};
-	} else {
-	  # not on file
-	  $form->error($locale->text('Project not on file!'));
+				# get new project
+				$form->{projectnumber} = $form->{"projectnumber_$i"};
+				if ( ( $rows = PE->projects( \%myconfig, $form ) ) > 1 ) {
+
+					# check form->{project_list} how many there are
+					$form->{rownumber} = $i;
+					&select_project;
+					exit;
+				}
+
+				if ( $rows == 1 ) {
+					$form->{"project_id_$i"} = $form->{project_list}->[0]->{id};
+					$form->{"projectnumber_$i"} =
+					  $form->{project_list}->[0]->{projectnumber};
+					$form->{"oldprojectnumber_$i"} =
+					  $form->{project_list}->[0]->{projectnumber};
+				}
+				else {
+
+					# not on file
+					$form->error( $locale->text('Project not on file!') );
+				}
+			}
+			else {
+				$form->{"oldprojectnumber_$i"} = "";
+			}
+		}
 	}
-      } else {
-	$form->{"oldprojectnumber_$i"} = "";
-      }
-    }
-  }
 
 }
 
-
 sub select_project {
-  
-  @column_index = qw(ndx projectnumber description);
 
-  $column_data{ndx} = qq|<th width=1%>&nbsp;</th>|;
-  $column_data{projectnumber} = qq|<th>|.$locale->text('Number').qq|</th>|;
-  $column_data{description} = qq|<th>|.$locale->text('Description').qq|</th>|;
-  
-  # list items with radio button on a form
-  $form->header;
+	@column_index = qw(ndx projectnumber description);
 
-  $title = $locale->text('Select from one of the projects below');
+	$column_data{ndx} = qq|<th width=1%>&nbsp;</th>|;
+	$column_data{projectnumber} =
+	  qq|<th>| . $locale->text('Number') . qq|</th>|;
+	$column_data{description} =
+	  qq|<th>| . $locale->text('Description') . qq|</th>|;
 
-  print qq|
+	# list items with radio button on a form
+	$form->header;
+
+	$title = $locale->text('Select from one of the projects below');
+
+	print qq|
 <body>
 
 <form method=post action=$form->{script}>
@@ -436,36 +492,41 @@ sub select_project {
       <table width=100%>
 	<tr class=listheading>|;
 
-  for (@column_index) { print "\n$column_data{$_}" }
-  
-  print qq|
+	for (@column_index) { print "\n$column_data{$_}" }
+
+	print qq|
         </tr>
 |;
 
-  my $i = 0;
-  foreach $ref (@{ $form->{project_list} }) {
-    $checked = ($i++) ? "" : "checked";
+	my $i = 0;
+	foreach $ref ( @{ $form->{project_list} } ) {
+		$checked = ( $i++ ) ? "" : "checked";
 
-   $column_data{ndx} = qq|<td><input name=ndx class=radio type=radio value=$i $checked></td>|;
-   $column_data{projectnumber} = qq|<td><input name="new_projectnumber_$i" type=hidden value="|.$form->quote($ref->{projectnumber}).qq|">$ref->{projectnumber}</td>|;
-   $column_data{description} = qq|<td>$ref->{description}</td>|;
-    
-    $j++; $j %= 2;
-    print qq|
+		$column_data{ndx} =
+qq|<td><input name=ndx class=radio type=radio value=$i $checked></td>|;
+		$column_data{projectnumber} =
+		    qq|<td><input name="new_projectnumber_$i" type=hidden value="|
+		  . $form->quote( $ref->{projectnumber} )
+		  . qq|">$ref->{projectnumber}</td>|;
+		$column_data{description} = qq|<td>$ref->{description}</td>|;
+
+		$j++;
+		$j %= 2;
+		print qq|
         <tr class=listrow$j>|;
 
-    for (@column_index) { print "\n$column_data{$_}" }
+		for (@column_index) { print "\n$column_data{$_}" }
 
-    print qq|
+		print qq|
         </tr>
 
 <input name="new_id_$i" type=hidden value=$ref->{id}>
 
 |;
 
-  }
-  
-  print qq|
+	}
+
+	print qq|
       </table>
     </td>
   </tr>
@@ -478,17 +539,18 @@ sub select_project {
 
 |;
 
-  # delete list variable
-  for (qw(nextsub project_list)) { delete $form->{$_} }
-  
-  $form->{action} = "project_selected";
-  
-  $form->hide_form;
+	# delete list variable
+	for (qw(nextsub project_list)) { delete $form->{$_} }
 
-  print qq|
+	$form->{action} = "project_selected";
+
+	$form->hide_form;
+
+	print qq|
 <input type=hidden name=nextsub value=project_selected>
 <br>
-<input class=submit type=submit name=action value="|.$locale->text('Continue').qq|">
+<input class=submit type=submit name=action value="|
+	  . $locale->text('Continue') . qq|">
 </form>
 
 </body>
@@ -497,100 +559,111 @@ sub select_project {
 
 }
 
-
 sub project_selected {
-  
-  # replace the variable with the one checked
 
-  # index for new item
-  $i = $form->{ndx};
-  
-  $form->{"projectnumber_$form->{rownumber}"} = $form->{"new_projectnumber_$i"};
-  $form->{"oldprojectnumber_$form->{rownumber}"} = $form->{"new_projectnumber_$i"};
-  $form->{"project_id_$form->{rownumber}"} = $form->{"new_id_$i"};
+	# replace the variable with the one checked
 
-  # delete all the new_ variables
-  for $i (1 .. $form->{lastndx}) {
-    for (qw(id projectnumber description)) { delete $form->{"new_${_}_$i"} }
-  }
-  
-  for (qw(ndx lastndx nextsub)) { delete $form->{$_} }
+	# index for new item
+	$i = $form->{ndx};
 
-  if ($form->{update}) {
-    &{ $form->{update} };
-  } else {
-    &update;
-  }
+	$form->{"projectnumber_$form->{rownumber}"} =
+	  $form->{"new_projectnumber_$i"};
+	$form->{"oldprojectnumber_$form->{rownumber}"} =
+	  $form->{"new_projectnumber_$i"};
+	$form->{"project_id_$form->{rownumber}"} = $form->{"new_id_$i"};
+
+	# delete all the new_ variables
+	for $i ( 1 .. $form->{lastndx} ) {
+		for (qw(id projectnumber description)) { delete $form->{"new_${_}_$i"} }
+	}
+
+	for (qw(ndx lastndx nextsub)) { delete $form->{$_} }
+
+	if ( $form->{update} ) {
+		&{ $form->{update} };
+	}
+	else {
+		&update;
+	}
 
 }
-
 
 sub post_as_new {
 
-  for (qw(id printed emailed queued)) { delete $form->{$_} }
-  if ($pref{remove_payment_on_post_as_new}){
-    for my $i (1 .. $form->{paidaccounts} - 1){ map { delete $form->{"${_}_$i"} } qw(datepaid source memo paid AR_paid) }
-  }
-  &post;
+	for (qw(id printed emailed queued)) { delete $form->{$_} }
+	if ( $pref{remove_payment_on_post_as_new} ) {
+		for my $i ( 1 .. $form->{paidaccounts} - 1 ) {
+			map { delete $form->{"${_}_$i"} }
+			  qw(datepaid source memo paid AR_paid);
+		}
+	}
+	&post;
 
 }
-
 
 sub print_and_post_as_new {
 
-  for (qw(id printed emailed queued)) { delete $form->{$_} }
-  &print_and_post;
+	for (qw(id printed emailed queued)) { delete $form->{$_} }
+	&print_and_post;
 
 }
-  
 
 sub repost {
 
-  if ($form->{type} =~ /_order/) {
-    if ($form->{print_and_save}) {
-      $form->{nextsub} = "print_and_save";
-      $msg = $locale->text('You are printing and saving an existing order');
-    } else {
-      $form->{nextsub} = "save";
-      $msg = $locale->text('You are saving an existing order');
-    }
-  } elsif ($form->{type} =~ /_quotation/) {
-    if ($form->{print_and_save}) {
-      $form->{nextsub} = "print_and_save";
-      $msg = $locale->text('You are printing and saving an existing quotation');
-    } else {
-      $form->{nextsub} = "save";
-      $msg = $locale->text('You are saving an existing quotation');
-    }
-  } else {
-    if ($form->{print_and_post}) {
-      $form->{nextsub} = "print_and_post";
-      $msg = $locale->text('You are printing and posting an existing transaction!');
-    } else {
-      $form->{nextsub} = "post";
-      $msg = $locale->text('You are posting an existing transaction!');
-    }
-  }
-  
-  delete $form->{action};
-  $form->{repost} = 1;
+	if ( $form->{type} =~ /_order/ ) {
+		if ( $form->{print_and_save} ) {
+			$form->{nextsub} = "print_and_save";
+			$msg =
+			  $locale->text('You are printing and saving an existing order');
+		}
+		else {
+			$form->{nextsub} = "save";
+			$msg = $locale->text('You are saving an existing order');
+		}
+	}
+	elsif ( $form->{type} =~ /_quotation/ ) {
+		if ( $form->{print_and_save} ) {
+			$form->{nextsub} = "print_and_save";
+			$msg = $locale->text(
+				'You are printing and saving an existing quotation');
+		}
+		else {
+			$form->{nextsub} = "save";
+			$msg = $locale->text('You are saving an existing quotation');
+		}
+	}
+	else {
+		if ( $form->{print_and_post} ) {
+			$form->{nextsub} = "print_and_post";
+			$msg = $locale->text(
+				'You are printing and posting an existing transaction!');
+		}
+		else {
+			$form->{nextsub} = "post";
+			$msg = $locale->text('You are posting an existing transaction!');
+		}
+	}
 
-  $form->header;
+	delete $form->{action};
+	$form->{repost} = 1;
 
-  print qq|
+	$form->header;
+
+	print qq|
 <body>
 
 <form method=post action=$form->{script}>
 |;
 
-  $form->hide_form;
+	$form->hide_form;
 
-  print qq|
-<h2 class=confirm>|.$locale->text('Warning!').qq|</h2>
+	print qq|
+<h2 class=confirm>| . $locale->text('Warning!') . qq|</h2>
 
 <h4>$msg</h4>
 
-<input name=action class=submit type=submit value="|.$locale->text('Continue').qq|">
+<input name=action class=submit type=submit value="|
+	  . $locale->text('Continue') . qq|">
 </form>
 
 </body>
@@ -599,48 +672,56 @@ sub repost {
 
 }
 
-
 sub schedule {
-  
-  ($form->{recurringreference}, $form->{recurringdescription}, $form->{recurringstartdate}, $form->{recurringrepeat}, $form->{recurringunit}, $form->{recurringhowmany}, $form->{recurringpayment}, $form->{recurringprint}, $form->{recurringemail}, $form->{recurringmessage}) = split /,/, $form->{recurring};
 
-  for (qw(reference description message)) { $form->{"recurring$_"} = $form->quote($form->unescape($form->{"recurring$_"})) }
-  
-  $form->{recurringstartdate} ||= $form->{transdate};
-  $recurringpayment = "checked" if $form->{recurringpayment};
+	(
+		$form->{recurringreference}, $form->{recurringdescription},
+		$form->{recurringstartdate}, $form->{recurringrepeat},
+		$form->{recurringunit},      $form->{recurringhowmany},
+		$form->{recurringpayment},   $form->{recurringprint},
+		$form->{recurringemail},     $form->{recurringmessage}
+	) = split /,/, $form->{recurring};
 
-  if ($form->{paidaccounts}) {
-    $postpayment = qq|
+	for (qw(reference description message)) {
+		$form->{"recurring$_"} =
+		  $form->quote( $form->unescape( $form->{"recurring$_"} ) );
+	}
+
+	$form->{recurringstartdate} ||= $form->{transdate};
+	$recurringpayment = "checked" if $form->{recurringpayment};
+
+	if ( $form->{paidaccounts} ) {
+		$postpayment = qq|
  	<tr>
-	  <th align=right nowrap>|.$locale->text('Include Payment').qq|</th>
+	  <th align=right nowrap>| . $locale->text('Include Payment') . qq|</th>
 	  <td><input name=recurringpayment type=checkbox class=checkbox value=1 $recurringpayment></td>
 	</tr>
 |;
-  }
+	}
 
-  if ($form->{recurringnextdate}) {
-    $nextdate = qq|
+	if ( $form->{recurringnextdate} ) {
+		$nextdate = qq|
 	      <tr>
-		<th align=right nowrap>|.$locale->text('Next Date').qq|</th>
+		<th align=right nowrap>| . $locale->text('Next Date') . qq|</th>
 		<td><input name=recurringnextdate size=11 class=date title="$myconfig{dateformat}" onChange="validateDate(this)" value=$form->{recurringnextdate}></td>
 	      </tr>
 |;
-  }
+	}
 
-  for (split /\r?\n/, $form->unescape($form->{selectformname})) {
-    (@_) = split /--/, $_;
-    $formname{$_[0]} = $_[1];
-  }
-  for (qw(check receipt)) { delete $formname{$_} }
+	for ( split /\r?\n/, $form->unescape( $form->{selectformname} ) ) {
+		(@_) = split /--/, $_;
+		$formname{ $_[0] } = $_[1];
+	}
+	for (qw(check receipt)) { delete $formname{$_} }
 
-  $selectformat = qq|html--html
-pdf--|.$locale->text('PDF');
+	$selectformat = qq|html--html
+pdf--| . $locale->text('PDF');
 
-  if ($form->{type} !~ /transaction/ && %formname) {
-    $email = qq|
+	if ( $form->{type} !~ /transaction/ && %formname ) {
+		$email = qq|
 	<table>
 	  <tr>
-	    <th colspan=2 class=listheading>|.$locale->text('E-mail').qq|</th>
+	    <th colspan=2 class=listheading>| . $locale->text('E-mail') . qq|</th>
 	  </tr>
 	  
 	  <tr>
@@ -648,41 +729,42 @@ pdf--|.$locale->text('PDF');
 	      <table>
 |;
 
-    # formname:format
-    @p = split /:/, $form->{recurringemail};
-    %p = ();
-    for ($i = 0; $i <= $#p; $i += 2) {
-      $p{$p[$i]}{format} = $p[$i+1];
-    }
-    
-    foreach $item (keys %formname) {
+		# formname:format
+		@p = split /:/, $form->{recurringemail};
+		%p = ();
+		for ( $i = 0 ; $i <= $#p ; $i += 2 ) {
+			$p{ $p[$i] }{format} = $p[ $i + 1 ];
+		}
 
-      $checked = ($p{$item}{format}) ? "checked" : "";
-      $p{$item}{format} ||= "pdf";
-    
-      $email .= qq|
+		foreach $item ( keys %formname ) {
+
+			$checked = ( $p{$item}{format} ) ? "checked" : "";
+			$p{$item}{format} ||= "pdf";
+
+			$email .= qq|
 		<tr>
 		  <td><input name="email$item" type=checkbox class=checkbox value=1 $checked></td>
 		  <th align=left>$formname{$item}</th>
 		  <td><select name="emailformat$item">|
-		  .$form->select_option($selectformat, $p{$item}{format}, undef, 1)
-		  .qq|</select>
+			  . $form->select_option( $selectformat, $p{$item}{format}, undef,
+				1 )
+			  . qq|</select>
 		  </td>
 		</tr>
 |;
-    }
-  
-    $email .= qq|
+		}
+
+		$email .= qq|
 	      </table>
 	    </td>
 	  </tr>
 	</table>
 |;
 
-    $message = qq|
+		$message = qq|
 	<table>
 	  <tr>
-	    <th class=listheading>|.$locale->text('E-mail message').qq|</th>
+	    <th class=listheading>| . $locale->text('E-mail message') . qq|</th>
 	  </tr>
 
 	  <tr>
@@ -691,26 +773,28 @@ pdf--|.$locale->text('PDF');
 	</table>
 |;
 
-  }
+	}
 
-  if (%printer && $latex && %formname) {
-    $selectprinter = "";
-    for (sort keys %printer) { $selectprinter .= qq|<option value="$_">$_\n| }
-    
-    # formname:format:printer
-    @p = split /:/, $form->{recurringprint};
+	if ( %printer && $latex && %formname ) {
+		$selectprinter = "";
+		for ( sort keys %printer ) {
+			$selectprinter .= qq|<option value="$_">$_\n|;
+		}
 
-    %p = ();
-    for ($i = 0; $i <= $#p; $i += 3) {
-      $p{$p[$i]}{formname} = $p[$i];
-      $p{$p[$i]}{format} = $p[$i+1];
-      $p{$p[$i]}{printer} = $p[$i+2];
-    }
-    
-    $print = qq|
+		# formname:format:printer
+		@p = split /:/, $form->{recurringprint};
+
+		%p = ();
+		for ( $i = 0 ; $i <= $#p ; $i += 3 ) {
+			$p{ $p[$i] }{formname} = $p[$i];
+			$p{ $p[$i] }{format}   = $p[ $i + 1 ];
+			$p{ $p[$i] }{printer}  = $p[ $i + 2 ];
+		}
+
+		$print = qq|
 	<table>
 	  <tr>
-	    <th colspan=2 class=listheading>|.$locale->text('Print').qq|</th>
+	    <th colspan=2 class=listheading>| . $locale->text('Print') . qq|</th>
 	  </tr>
 
 	  <tr>
@@ -718,91 +802,100 @@ pdf--|.$locale->text('PDF');
 	      <table>
 |;
 
-    foreach $item (keys %formname) {
-   
-      $selectprinter =~ s/ selected//;
-      $p{$item}{printer} ||= $myconfig{printer};
-      $selectprinter =~ s/(<option value="\Q$p{$item}{printer}\E")/$1 selected/;
+		foreach $item ( keys %formname ) {
 
-      $checked = ($p{$item}{formname}) ? "checked" : "";
+			$selectprinter =~ s/ selected//;
+			$p{$item}{printer} ||= $myconfig{printer};
+			$selectprinter =~
+			  s/(<option value="\Q$p{$item}{printer}\E")/$1 selected/;
 
-      $p{$item}{format} ||= $myconfig{outputformat};
-      $p{$item}{format} ||= "postscript";
-     
-      $print .= qq|
+			$checked = ( $p{$item}{formname} ) ? "checked" : "";
+
+			$p{$item}{format} ||= $myconfig{outputformat};
+			$p{$item}{format} ||= "postscript";
+
+			$print .= qq|
 		<tr>
 		  <td><input name="print$item" type=checkbox class=checkbox value=1 $checked></td>
 		  <th align=left>$formname{$item}</th>
 		  <td><select name="printprinter$item">$selectprinter</select></td>
 		  <td><select name="printformat$item">|
-		  .$form->select_option($selectformat, $p{$item}{format}, undef, 1)
-		  .qq|</select>
+			  . $form->select_option( $selectformat, $p{$item}{format}, undef,
+				1 )
+			  . qq|</select>
 		  </td>
 		</tr>
 |;
-    }
-      
-    $print .= qq|
+		}
+
+		$print .= qq|
 	      </table>
 	    </td>
 	  </tr>
 	</table>
 |;
 
+	}
 
-  }
-  
-  $selectrepeat = "";
-  for (1 .. 31) { $selectrepeat .= qq|<option value="$_">$_\n| }
-  $selectrepeat =~ s/(<option value="$form->{recurringrepeat}")/$1 selected/;
-  
-  $selectunit = qq|<option value="days">|.$locale->text('Day(s)').qq|
-  <option value="weeks">|.$locale->text('Week(s)').qq|
-  <option value="months">|.$locale->text('Month(s)').qq|
-  <option value="years">|.$locale->text('Year(s)');
+	$selectrepeat = "";
+	for ( 1 .. 31 ) { $selectrepeat .= qq|<option value="$_">$_\n| }
+	$selectrepeat =~ s/(<option value="$form->{recurringrepeat}")/$1 selected/;
 
-  if ($form->{recurringunit}) {
-    $selectunit =~ s/(<option value="$form->{recurringunit}")/$1 selected/;
-  }
+	$selectunit = qq|<option value="days">| . $locale->text('Day(s)') . qq|
+  <option value="weeks">| . $locale->text('Week(s)') . qq|
+  <option value="months">| . $locale->text('Month(s)') . qq|
+  <option value="years">| . $locale->text('Year(s)');
 
-  if ($form->{$form->{vc}}) {
-    $description = $form->{$form->{vc}};
-    $description =~ s/--.*//;
-  } else {
-    $description = $form->{description};
-  }
+	if ( $form->{recurringunit} ) {
+		$selectunit =~ s/(<option value="$form->{recurringunit}")/$1 selected/;
+	}
 
-  $repeat = qq|
+	if ( $form->{ $form->{vc} } ) {
+		$description = $form->{ $form->{vc} };
+		$description =~ s/--.*//;
+	}
+	else {
+		$description = $form->{description};
+	}
+
+	$repeat = qq|
 	    <table>
 	      <tr>
-		<th colspan=3  class=listheading>|.$locale->text('Repeat').qq|</th>
+		<th colspan=3  class=listheading>| . $locale->text('Repeat') . qq|</th>
 	      </tr>
 
 	      <tr>
-		<th align=right nowrap>|.$locale->text('Every').qq|</th>
+		<th align=right nowrap>| . $locale->text('Every') . qq|</th>
 		<td><select name=recurringrepeat>$selectrepeat</td>
 		<td><select name=recurringunit>$selectunit</td>
 	      </tr>
 	      <tr>
-		<th align=right nowrap>|.$locale->text('For').qq|</th>
+		<th align=right nowrap>| . $locale->text('For') . qq|</th>
 		<td><input name=recurringhowmany size=3 value=$form->{recurringhowmany}></td>
-		<th align=left nowrap>|.$locale->text('time(s)').qq|</th>
+		<th align=left nowrap>| . $locale->text('time(s)') . qq|</th>
 	      </tr>
 	    </table>
 |;
 
-  
-  $title = $locale->text('Recurring Transaction') ." ".  $locale->text('for') ." $description";
+	$title =
+	    $locale->text('Recurring Transaction') . " "
+	  . $locale->text('for')
+	  . " $description";
 
-  if (($rows = $form->numtextrows($form->{recurringdescription}, 60)) > 1) {
-    $description = qq|<textarea name="recurringdescription" rows=$rows cols=35 wrap=soft>$form->{recurringdescription}</textarea>|;
-  } else {
-    $description = qq|<input name=recurringdescription size=60 value="|.$form->quote($form->{recurringdescription}).qq|">|;
-  }
-  
-  $form->header;
+	if ( ( $rows = $form->numtextrows( $form->{recurringdescription}, 60 ) ) >
+		1 )
+	{
+		$description =
+qq|<textarea name="recurringdescription" rows=$rows cols=35 wrap=soft>$form->{recurringdescription}</textarea>|;
+	}
+	else {
+		$description = qq|<input name=recurringdescription size=60 value="|
+		  . $form->quote( $form->{recurringdescription} ) . qq|">|;
+	}
 
-  print qq|
+	$form->header;
+
+	print qq|
 <body>
 
 <form method=post action=$form->{script}>
@@ -819,16 +912,18 @@ pdf--|.$locale->text('PDF');
 	  <td>
 	    <table>
 	      <tr>
-		<th align=right nowrap>|.$locale->text('Reference').qq|</th>
-		<td><input name=recurringreference size=20 value="|.$form->quote($form->{recurringreference}).qq|"></td>
+		<th align=right nowrap>| . $locale->text('Reference') . qq|</th>
+		<td><input name=recurringreference size=20 value="|
+	  . $form->quote( $form->{recurringreference} )
+	  . qq|"></td>
 	      </tr>
 	      <tr>
-		<th align=right nowrap>|.$locale->text('Description').qq|</th>
+		<th align=right nowrap>| . $locale->text('Description') . qq|</th>
 		<td>$description</td>
 	      </tr>
 
 	      <tr>
-		<th align=right nowrap>|.$locale->text('Startdate').qq|</th>
+		<th align=right nowrap>| . $locale->text('Startdate') . qq|</th>
 		<td><input name=recurringstartdate size=11 class=date title="$myconfig{dateformat}" onChange="validateDate(this)" value=$form->{recurringstartdate}></td>
 	      </tr>
 	      $nextdate
@@ -869,23 +964,31 @@ pdf--|.$locale->text('PDF');
 <br>
 |;
 
-  %button = ('Save Schedule' => { ndx => 1, key => 'S', value => $locale->text('Save Schedule') },
-             'Delete Schedule' => { ndx => 16, key => 'D', value => $locale->text('Delete Schedule') },
-	    );
-  
-  $form->print_button(\%button, 'Save Schedule');
-  
-  if ($form->{recurring}) {
-    $form->print_button(\%button, 'Delete Schedule');
-  }
+	%button = (
+		'Save Schedule' =>
+		  { ndx => 1, key => 'S', value => $locale->text('Save Schedule') },
+		'Delete Schedule' =>
+		  { ndx => 16, key => 'D', value => $locale->text('Delete Schedule') },
+	);
 
-  # delete variables
-  for (qw(action recurring)) { delete $form->{$_} }
-  for (qw(reference description startdate nextdate enddate repeat unit howmany payment print email message)) { delete $form->{"recurring$_"} }
+	$form->print_button( \%button, 'Save Schedule' );
 
-  $form->hide_form;
+	if ( $form->{recurring} ) {
+		$form->print_button( \%button, 'Delete Schedule' );
+	}
 
-  print qq|
+	# delete variables
+	for (qw(action recurring)) { delete $form->{$_} }
+	for (
+		qw(reference description startdate nextdate enddate repeat unit howmany payment print email message)
+	  )
+	{
+		delete $form->{"recurring$_"};
+	}
+
+	$form->hide_form;
+
+	print qq|
 
 </form>
 
@@ -895,195 +998,237 @@ pdf--|.$locale->text('PDF');
 
 }
 
-
 sub save_schedule {
 
-  $form->{recurring} = "";
+	$form->{recurring} = "";
 
-  for (qw(reference description message)) { $form->{"recurring$_"} = $form->escape($form->{"recurring$_"},1) }
-  
-  if ($form->{recurringstartdate}) {
-    for (qw(reference description startdate repeat unit howmany payment)) { $form->{recurring} .= qq|$form->{"recurring$_"},| }
-  }
+	for (qw(reference description message)) {
+		$form->{"recurring$_"} = $form->escape( $form->{"recurring$_"}, 1 );
+	}
 
-  @p = ();
-  for $item (split /\r?\n/, $form->unescape($form->{selectformname})) {
-    (@a) = split /--/, $item;
-    push @p, $a[0];
-  }
+	if ( $form->{recurringstartdate} ) {
+		for (qw(reference description startdate repeat unit howmany payment)) {
+			$form->{recurring} .= qq|$form->{"recurring$_"},|;
+		}
+	}
 
-  $recurringemail = "";
-  for (@p) { $recurringemail .= qq|$_:$form->{"emailformat$_"}:| if $form->{"email$_"} }
-  chop $recurringemail;
-  
-  $recurringprint = "";
-  for (@p) { $recurringprint .= qq|$_:$form->{"printformat$_"}:$form->{"printprinter$_"}:| if $form->{"print$_"} }
-  chop $recurringprint;
+	@p = ();
+	for $item ( split /\r?\n/, $form->unescape( $form->{selectformname} ) ) {
+		(@a) = split /--/, $item;
+		push @p, $a[0];
+	}
 
-  $form->{recurring} .= qq|$recurringprint,$recurringemail,$form->{recurringmessage}| if $recurringemail || $recurringprint;
+	$recurringemail = "";
+	for (@p) {
+		$recurringemail .= qq|$_:$form->{"emailformat$_"}:|
+		  if $form->{"email$_"};
+	}
+	chop $recurringemail;
 
-  $form->save_recurring(undef, \%myconfig) if $form->{id};
+	$recurringprint = "";
+	for (@p) {
+		$recurringprint .=
+		  qq|$_:$form->{"printformat$_"}:$form->{"printprinter$_"}:|
+		  if $form->{"print$_"};
+	}
+	chop $recurringprint;
 
-  if ($form->{recurringid}) {
-    $form->redirect;
-  } else {
-    &update;
-  }
+	$form->{recurring} .=
+	  qq|$recurringprint,$recurringemail,$form->{recurringmessage}|
+	  if $recurringemail || $recurringprint;
+
+	$form->save_recurring( undef, \%myconfig ) if $form->{id};
+
+	if ( $form->{recurringid} ) {
+		$form->redirect;
+	}
+	else {
+		&update;
+	}
 
 }
-
 
 sub delete_schedule {
 
-  $form->{recurring} = "";
+	$form->{recurring} = "";
 
-  $form->save_recurring(undef, \%myconfig) if $form->{id};
+	$form->save_recurring( undef, \%myconfig ) if $form->{id};
 
-  if ($form->{recurringid}) {
-    $form->redirect;
-  } else {
-    &update;
-  }
+	if ( $form->{recurringid} ) {
+		$form->redirect;
+	}
+	else {
+		&update;
+	}
 
 }
-
 
 sub reprint {
 
-  $myconfig{vclimit} = 0;
-  $pf = "print_form";
+	$myconfig{vclimit} = 0;
+	$pf = "print_form";
 
-  for (qw(format formname media message)) { $temp{$_} = $form->{$_} }
+	for (qw(format formname media message)) { $temp{$_} = $form->{$_} }
 
-  if ($form->{module} eq 'oe') {
-    &order_links;
-    &prepare_order;
-    delete $form->{order_details};
-    for (keys %$form) { $form->{$_} = $form->unquote($form->{$_}) }
-  } else {
-    if ($form->{type} eq 'invoice') {
-      &invoice_links;
-      &prepare_invoice;
-      for (keys %$form) { $form->{$_} = $form->unquote($form->{$_}) }
-    } else {
-      &create_links;
-      $form->{rowcount}--;
-      for (1 .. $form->{rowcount}) { $form->{"amount_$_"} = $form->format_amount(\%myconfig, $form->{"amount_$_"}, $form->{precision}) }
-      for (split / /, $form->{taxaccounts}) { $form->{"tax_$_"} = $form->format_amount(\%myconfig, $form->{"tax_$_"}, $form->{precision}) }
-      $pf = "print_transaction";
-    }
-    for (qw(acc_trans invoice_details)) { delete $form->{$_} }
-  }
+	if ( $form->{module} eq 'oe' ) {
+		&order_links;
+		&prepare_order;
+		delete $form->{order_details};
+		for ( keys %$form ) { $form->{$_} = $form->unquote( $form->{$_} ) }
+	}
+	else {
+		if ( $form->{type} eq 'invoice' ) {
+			&invoice_links;
+			&prepare_invoice;
+			for ( keys %$form ) { $form->{$_} = $form->unquote( $form->{$_} ) }
+		}
+		else {
+			&create_links;
+			$form->{rowcount}--;
+			for ( 1 .. $form->{rowcount} ) {
+				$form->{"amount_$_"} =
+				  $form->format_amount( \%myconfig, $form->{"amount_$_"},
+					$form->{precision} );
+			}
+			for ( split / /, $form->{taxaccounts} ) {
+				$form->{"tax_$_"} =
+				  $form->format_amount( \%myconfig, $form->{"tax_$_"},
+					$form->{precision} );
+			}
+			$pf = "print_transaction";
+		}
+		for (qw(acc_trans invoice_details)) { delete $form->{$_} }
+	}
 
-  for (qw(department employee language month partsgroup project years)) { delete $form->{"all_$_"} }
-  
-  for (keys %temp) { $form->{$_} = $temp{$_} }
-  
-  $form->{rowcount}++;
-  $form->{paidaccounts}++ ;
+	for (qw(department employee language month partsgroup project years)) {
+		delete $form->{"all_$_"};
+	}
 
-  delete $form->{paid};
+	for ( keys %temp ) { $form->{$_} = $temp{$_} }
 
-  for (1 .. $form->{paidaccounts}) { $form->{"paid_$_"} = $form->format_amount(\%myconfig, $form->{"paid_$_"}, $form->{precision}) }
-  $form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} = $form->{payment_accno};
-  $form->{"paymentmethod_$form->{paidaccounts}"} = $form->{payment_method};
+	$form->{rowcount}++;
+	$form->{paidaccounts}++;
 
+	delete $form->{paid};
 
-  $form->{copies} = 1;
+	for ( 1 .. $form->{paidaccounts} ) {
+		$form->{"paid_$_"} =
+		  $form->format_amount( \%myconfig, $form->{"paid_$_"},
+			$form->{precision} );
+	}
+	$form->{"$form->{ARAP}_paid_$form->{paidaccounts}"} =
+	  $form->{payment_accno};
+	$form->{"paymentmethod_$form->{paidaccounts}"} = $form->{payment_method};
 
-  &$pf;
+	$form->{copies} = 1;
 
-  if ($form->{media} eq 'email') {
-    # add email message
-    $now = scalar localtime;
-    $cc = $locale->text('Cc').qq|: $form->{cc}\n| if $form->{cc};
-    $bcc = $locale->text('Bcc').qq|: $form->{bcc}\n| if $form->{bcc};
+	&$pf;
 
-    $form->{intnotes} .= qq|\n\n| if $form->{intnotes};
-    $form->{intnotes} .= qq|[email]\n|
-    .$locale->text('Date').qq|: $now\n|
-    .$locale->text('To').qq|: $form->{email}\n${cc}${bcc}|
-    .$locale->text('Subject').qq|: $form->{subject}\n\n|
-    .$locale->text('Message').qq|: |;
+	if ( $form->{media} eq 'email' ) {
 
-    $form->{intnotes} .= ($form->{message}) ? $form->{message} : $locale->text('sent');
-    
-    $form->save_intnotes(\%myconfig, $form->{module});
-  }
-  
+		# add email message
+		$now = scalar localtime;
+		$cc  = $locale->text('Cc') . qq|: $form->{cc}\n| if $form->{cc};
+		$bcc = $locale->text('Bcc') . qq|: $form->{bcc}\n| if $form->{bcc};
+
+		$form->{intnotes} .= qq|\n\n| if $form->{intnotes};
+		$form->{intnotes} .=
+		    qq|[email]\n|
+		  . $locale->text('Date')
+		  . qq|: $now\n|
+		  . $locale->text('To')
+		  . qq|: $form->{email}\n${cc}${bcc}|
+		  . $locale->text('Subject')
+		  . qq|: $form->{subject}\n\n|
+		  . $locale->text('Message') . qq|: |;
+
+		$form->{intnotes} .=
+		  ( $form->{message} ) ? $form->{message} : $locale->text('sent');
+
+		$form->save_intnotes( \%myconfig, $form->{module} );
+	}
+
 }
-
 
 sub islocked {
 
-  print "<p><font color=red>".$locale->text('Locked by').": $form->{haslock}</font>" if $form->{haslock};
+	print "<p><font color=red>"
+	  . $locale->text('Locked by')
+	  . ": $form->{haslock}</font>"
+	  if $form->{haslock};
 
 }
 
+sub continue       { &{ $form->{nextsub} } }
+sub gl_transaction { &add }
 
-sub continue { &{ $form->{nextsub} } };
-sub gl_transaction { &add };
 sub ar_transaction {
-  $form->{script} = "ar.pl";
-  &add_transaction;
-}
-sub ap_transaction {
-  $form->{script} = "ap.pl";
-  &add_transaction;
-};
-sub sales_invoice_ {
-  $form->{script} = "is.pl";
-  $form->{type} = "invoice";
-  &add_transaction;
-}
-sub credit_invoice_ {
-  $form->{script} = "is.pl";
-  $form->{type} = "credit_invoice";
-  &add_transaction;
-}
-sub vendor_invoice_ {
-  $form->{script} = "ir.pl";
-  $form->{type} = "invoice";
-  &add_transaction;
-}
-sub debit_invoice_ {
-  $form->{script} = "ir.pl";
-  $form->{type} = "debit_invoice";
-  &add_transaction;
+	$form->{script} = "ar.pl";
+	&add_transaction;
 }
 
+sub ap_transaction {
+	$form->{script} = "ap.pl";
+	&add_transaction;
+}
+
+sub sales_invoice_ {
+	$form->{script} = "is.pl";
+	$form->{type}   = "invoice";
+	&add_transaction;
+}
+
+sub credit_invoice_ {
+	$form->{script} = "is.pl";
+	$form->{type}   = "credit_invoice";
+	&add_transaction;
+}
+
+sub vendor_invoice_ {
+	$form->{script} = "ir.pl";
+	$form->{type}   = "invoice";
+	&add_transaction;
+}
+
+sub debit_invoice_ {
+	$form->{script} = "ir.pl";
+	$form->{type}   = "debit_invoice";
+	&add_transaction;
+}
 
 sub preview {
 
-  $form->{format} = "pdf";
-  $form->{media} = "screen";
+	$form->{format} = "pdf";
+	$form->{media}  = "screen";
 
-  &print;
+	&print;
 
 }
 
 sub new_number {
 
-  $invnumber = "invnumber";
-  $numberfld = ($form->{vc} eq 'customer') ? "sinumber" : "vinumber";
+	$invnumber = "invnumber";
+	$numberfld = ( $form->{vc} eq 'customer' ) ? "sinumber" : "vinumber";
 
-  if ($form->{type} =~ /order/) {
-    $invnumber = "ordnumber";
-    $numberfld = ($form->{vc} eq 'customer') ? "sonumber" : "ponumber";
-  } elsif ($form->{type} =~ /quotation/) {
-    $invnumber = "quonumber";
-    $numberfld = ($form->{vc} eq 'customer') ? "sqnumber" : "rfqnumber";
-  } elsif ($form->{script} eq 'gl.pl') {
-    $invnumber = "reference";
-    $numberfld = "glnumber";
-  }
+	if ( $form->{type} =~ /order/ ) {
+		$invnumber = "ordnumber";
+		$numberfld = ( $form->{vc} eq 'customer' ) ? "sonumber" : "ponumber";
+	}
+	elsif ( $form->{type} =~ /quotation/ ) {
+		$invnumber = "quonumber";
+		$numberfld = ( $form->{vc} eq 'customer' ) ? "sqnumber" : "rfqnumber";
+	}
+	elsif ( $form->{script} eq 'gl.pl' ) {
+		$invnumber = "reference";
+		$numberfld = "glnumber";
+	}
 
-  $form->{"$invnumber"} = $form->update_defaults(\%myconfig, $numberfld);
+	$form->{"$invnumber"} = $form->update_defaults( \%myconfig, $numberfld );
 
-  &update;
+	&update;
 
 }
 
 sub save_report {
-  $form->save_form('report');
+	$form->save_form('report');
 }

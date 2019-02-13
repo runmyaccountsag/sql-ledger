@@ -871,7 +871,7 @@ sub parse_template {
 					}
 
 					# don't parse par, we need it for each line
-					print OUT $self->format_line($myconfig, $par, $j );
+					print OUT $self->format_line( $myconfig, $par, $j );
 
 				}
 				next;
@@ -993,7 +993,7 @@ sub parse_template {
 				next;
 			}
 
-			print OUT $self->format_line($myconfig, $_);
+			print OUT $self->format_line( $myconfig, $_ );
 
 		}
 	}
@@ -1163,7 +1163,7 @@ Content-Disposition: attachment; filename="$self->{tmpfile}"\n\n|;
 }
 
 sub format_line {
-	my $self = shift;
+	my $self     = shift;
 	my $myconfig = shift;
 	$_ = shift;
 	my $i = shift;
@@ -1403,9 +1403,11 @@ sub format_line {
 				}
 			}
 		}
-		
-		if ( $pipe =~ /yyyy-mm-dd/) {
-			my $time = Time::Piece->strptime($newstr, $self->get_dateformatx($myconfig));
+
+		if ( $pipe =~ /yyyy-mm-dd/ ) {
+			my $time =
+			  Time::Piece->strptime( $newstr,
+				$self->get_dateformatx($myconfig) );
 			$newstr = $time->strftime('%Y-%M-%d');
 		}
 
@@ -1421,29 +1423,34 @@ sub format_line {
 }
 
 sub today {
-	my $self = shift;
+	my $self     = shift;
 	my $myconfig = shift;
-	my $t = Time::Piece->localtime();
-	my $format = $self->get_dateformatx($myconfig);
+	my $t        = Time::Piece->localtime();
+	my $format   = $self->get_dateformatx($myconfig);
 	$format =~ s/M/m/;
 	my $time = $t->strftime($format);
 	return $time;
 }
 
 sub get_dateformatx {
-	my ($self, $myconfig) = @_;
-	if ($myconfig->{dateformat} eq 'dd.mm.yy') {
-		return '%d.%M.%Y';		
-	} elsif ($myconfig->{dateformat} eq 'mm-dd-yy') {
-		return '%M-%d-%Y';		
-	} elsif ($myconfig->{dateformat} eq 'mm/dd/yy') {
-		return '%M/%d/%Y';		
-	} elsif ($myconfig->{dateformat} eq 'dd-mm-yy') {
-		return '%d-%M-%Y';		
-	} elsif ($myconfig->{dateformat} eq 'dd/mm/yy') {
-		return '%d/%M/%Y';		
-	} elsif ($myconfig->{dateformat} eq 'yyyy-mm-dd') {
-		return '%Y-%M-%d';		
+	my ( $self, $myconfig ) = @_;
+	if ( $myconfig->{dateformat} eq 'dd.mm.yy' ) {
+		return '%d.%M.%Y';
+	}
+	elsif ( $myconfig->{dateformat} eq 'mm-dd-yy' ) {
+		return '%M-%d-%Y';
+	}
+	elsif ( $myconfig->{dateformat} eq 'mm/dd/yy' ) {
+		return '%M/%d/%Y';
+	}
+	elsif ( $myconfig->{dateformat} eq 'dd-mm-yy' ) {
+		return '%d-%M-%Y';
+	}
+	elsif ( $myconfig->{dateformat} eq 'dd/mm/yy' ) {
+		return '%d/%M/%Y';
+	}
+	elsif ( $myconfig->{dateformat} eq 'yyyy-mm-dd' ) {
+		return '%Y-%M-%d';
 	}
 	return '';
 }

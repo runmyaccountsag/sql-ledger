@@ -21,12 +21,13 @@ require "$form->{path}/rp.pl";
 require "$form->{path}/pos.pl";
 
 # customizations
-if (-f "$form->{path}/custom_pos.pl") {
-  eval { require "$form->{path}/custom_pos.pl"; };
+if ( -f "$form->{path}/custom_pos.pl" ) {
+	eval { require "$form->{path}/custom_pos.pl"; };
 }
-if (-f "$form->{path}/$form->{login}_pos.pl") {
-  eval { require "$form->{path}/$form->{login}_pos.pl"; };
+if ( -f "$form->{path}/$form->{login}_pos.pl" ) {
+	eval { require "$form->{path}/$form->{login}_pos.pl"; };
 }
 
 1;
+
 # end

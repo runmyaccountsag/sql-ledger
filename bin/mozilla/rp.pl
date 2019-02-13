@@ -250,8 +250,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	  <td colspan=3><input name=method class=radio type=radio value=accrual $method{accrual}>&nbsp;|
 	  . $locale->text('Accrual') . qq|
 	  &nbsp;<input name=method class=radio type=radio value=cash $method{cash}>&nbsp;|
-	  . $locale->text('Cash')
-	  . qq|</td>
+	  . $locale->text('Cash') . qq|</td>
 	</tr>
 |;
 
@@ -295,8 +294,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	  <td><input name=l_heading class=checkbox type=checkbox value=Y>&nbsp;|
 		  . $locale->text('Heading') . qq|
 	  <input name=l_subtotal class=checkbox type=checkbox value=Y>&nbsp;|
-		  . $locale->text('Subtotal')
-		  . qq|</td>
+		  . $locale->text('Subtotal') . qq|</td>
 	</tr>
 |;
 	}
@@ -380,8 +378,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	  <input name=l_subtotal class=checkbox type=checkbox value=Y>&nbsp;|
 		  . $locale->text('Subtotal') . qq|
 	  <input name=l_accno class=checkbox type=checkbox value=Y checked>&nbsp;|
-		  . $locale->text('Account Number')
-		  . qq|</td>
+		  . $locale->text('Account Number') . qq|</td>
 	</tr>
 |;
 	}
@@ -442,8 +439,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	  <input name=l_subtotal class=checkbox type=checkbox value=Y>&nbsp;|
 		  . $locale->text('Subtotal') . qq|
 	  <input name=l_accno class=checkbox type=checkbox value=Y checked>&nbsp;|
-		  . $locale->text('Account Number')
-		  . qq|</td>
+		  . $locale->text('Account Number') . qq|</td>
 	</tr>
 |;
 	}
@@ -476,8 +472,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	  <input name=l_name class=checkbox type=checkbox value=Y checked>&nbsp;|
 		  . $locale->text('Company Name') . qq|
       <input type=checkbox class=checkbox name=fx_transaction value=1 checked> |
-		  . $locale->text('Include Exchange Rate Difference')
-		  . qq|</td>
+		  . $locale->text('Include Exchange Rate Difference') . qq|</td>
 	</tr>
 |;
 	}
@@ -762,16 +757,13 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	        <table>
 		  <tr>
 	            <td nowrap><input name=overdue type=radio class=radio value=0 checked> |
-		  . $locale->text('Aged')
-		  . qq|</td>
+		  . $locale->text('Aged') . qq|</td>
  	            <td nowrap><input name=overdue type=radio class=radio value=1> |
-		  . $locale->text('Overdue')
-		  . qq|</td>
+		  . $locale->text('Overdue') . qq|</td>
 	          </tr>
 		  <tr>
 		    <td nowrap width=70><input name=c0 type=checkbox class=checkbox value=1 checked> |
-		  . $locale->text('Current')
-		  . qq|</td>
+		  . $locale->text('Current') . qq|</td>
 		    <td nowrap width=70><input name=c30 type=checkbox class=checkbox value=1 checked> 30</td>
 		    <td nowrap width=70><input name=c60 type=checkbox class=checkbox value=1 checked> 60</td>
 		    <td nowrap width=70><input name=c90 type=checkbox class=checkbox value=1 checked> 90</td>
@@ -781,8 +773,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 		    <td nowrap width=70><input name=c45 type=checkbox class=checkbox value=1> 45</td>
 		    <td nowrap width=70><input name=c75 type=checkbox class=checkbox value=1> 75</td>
 		    <td nowrap><input name=payed type=checkbox class=checkbox value=1> |
-		  . $locale->text('Include Payed')
-		  . qq|</td>
+		  . $locale->text('Include Payed') . qq|</td>
 		  </tr>
 		</table>
 	      </td>
@@ -975,8 +966,7 @@ qq|<option value="$myconfig{department}--$myconfig{department_id}">$myconfig{dep
 	    <table width=100%>
 	      <tr>
 		<td align=right><input type=checkbox class=checkbox name=fx_transaction value=1 checked> |
-		  . $locale->text('Exchange Rate Difference')
-		  . qq|</td>
+		  . $locale->text('Exchange Rate Difference') . qq|</td>
 	      </tr>
 |;
 
@@ -1007,7 +997,7 @@ qq|<input name="l_source" class=checkbox type=checkbox value=Y checked> |
 qq|<input name="l_memo" class=checkbox type=checkbox value=Y checked> |
 		  . $locale->text('Memo');
 		push @a,
-qq|<input name="l_variance" class=checkbox type=checkbox value=Y> |
+		  qq|<input name="l_variance" class=checkbox type=checkbox value=Y> |
 		  . $locale->text('Variance');
 
 		while (@a) {
@@ -1022,8 +1012,7 @@ qq|<input name="l_variance" class=checkbox type=checkbox value=Y> |
 		print qq|
 	      <tr>
 		<td><input name=l_subtotal class=checkbox type=checkbox value=Y> |
-		  . $locale->text('Subtotal')
-		  . qq|</td>
+		  . $locale->text('Subtotal') . qq|</td>
 	      </tr>
 	    </table>
 	  </td>
@@ -2680,8 +2669,7 @@ sub print_options {
 
 	print qq|
   <th><input type=checkbox name=create_single_pdf value=1> |
-	  . $locale->text("Create single PDF")
-	  . qq|</th>
+	  . $locale->text("Create single PDF") . qq|</th>
 |;
 
 	$form->{selectlanguage} = $form->escape( $form->{selectlanguage}, 1 );
@@ -2806,8 +2794,7 @@ sub prepare_e_mail {
 	<tr>
           <th align=right nowrap>| . $locale->text('Subject') . qq|</th>
 	  <td><input name=subject size=30 value="|
-	  . $form->quote( $form->{subject} )
-	  . qq|"></td>
+	  . $form->quote( $form->{subject} ) . qq|"></td>
 	  $bcc
 	</tr>
       </table>
@@ -4174,7 +4161,7 @@ sub list_payments {
 			$column_data{memo}     = "<td>$payment->{memo}&nbsp;</td>";
 			$column_data{employee} = "<td>$payment->{employee}&nbsp;</td>";
 			$column_data{till}     = "<td>$payment->{till}&nbsp;</td>";
-			$column_data{variance}     = "<td>$payment->{variance}&nbsp;</td>";
+			$column_data{variance} = "<td>$payment->{variance}&nbsp;</td>";
 
 			$subtotalpaid     += $payment->{paid};
 			$accounttotalpaid += $payment->{paid};

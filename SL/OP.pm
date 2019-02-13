@@ -17,52 +17,62 @@
 package OP;
 
 sub overpayment {
-  my ($self, $myconfig, $form, $dbh, $amount, $ml) = @_;
- 
-  my $fxamount = $form->round_amount($amount * $form->{exchangerate}, $form->{precision});
-  my ($paymentaccno) = split /--/, $form->{"$form->{ARAP}_paid"};
+	my ( $self, $myconfig, $form, $dbh, $amount, $ml ) = @_;
 
-  my ($null, $department_id) = split /--/, $form->{department};
-  $department_id *= 1;
+	my $fxamount =
+	  $form->round_amount( $amount * $form->{exchangerate},
+		$form->{precision} );
+	my ($paymentaccno) = split /--/, $form->{"$form->{ARAP}_paid"};
 
-  my $action = 'posted';
-  
-  my $approved = ($form->{pending}) ? '0' : '1';
-  my $batchid ||= $form->{batchid};
+	my ( $null, $department_id ) = split /--/, $form->{department};
+	$department_id *= 1;
 
-  if (!$approved) {
-    $action = 'saved';
-  }
-  
-  my $uid = localtime;
-  $uid .= $$;
+	my $action = 'posted';
 
-  # add AR/AP header transaction with a payment
-  $query = qq|INSERT INTO |.$form->dbclean($form->{arap}).qq| (invnumber, employee_id, approved)
-	      VALUES (|.$dbh->quote($uid).qq|, (SELECT id FROM employee
-			     WHERE login = |.$dbh->quote($form->{login}).qq|), '$approved')|;
-  $dbh->do($query) || $form->dberror($query);
+	my $approved = ( $form->{pending} ) ? '0' : '1';
+	my $batchid ||= $form->{batchid};
 
-  $query = qq|SELECT id FROM |.$form->dbclean($form->{arap}).qq|
-	    WHERE invnumber = |.$dbh->quote($uid).qq||;
-  ($uid) = $dbh->selectrow_array($query);
-  
-  my $voucherid = 'NULL';
+	if ( !$approved ) {
+		$action = 'saved';
+	}
 
-  if ($form->{batch}) {
-    $form->{vouchernumber} = $form->update_defaults($myconfig, 'vouchernumber', $dbh) unless $form->{vouchernumber};
+	my $uid = localtime;
+	$uid .= $$;
 
-    if (!($voucherid = $form->{voucherid})) {
-      $query = qq|SELECT nextval('id')|;
-      ($voucherid) = $dbh->selectrow_array($query);
-    }
-  }
+	# add AR/AP header transaction with a payment
+	$query =
+	    qq|INSERT INTO |
+	  . $form->dbclean( $form->{arap} )
+	  . qq| (invnumber, employee_id, approved)
+	      VALUES (| . $dbh->quote($uid) . qq|, (SELECT id FROM employee
+			     WHERE login = | . $dbh->quote( $form->{login} ) . qq|), '$approved')|;
+	$dbh->do($query) || $form->dberror($query);
 
-  my $invnumber = $form->{invnumber};
-  $invnumber = $form->update_defaults($myconfig, ($form->{arap} eq 'ar') ? "sinumber" : "vinumber", $dbh) unless $invnumber;
+	$query = qq|SELECT id FROM | . $form->dbclean( $form->{arap} ) . qq|
+	    WHERE invnumber = | . $dbh->quote($uid) . qq||;
+	($uid) = $dbh->selectrow_array($query);
 
-  $query = qq|UPDATE |.$form->dbclean($form->{arap}).qq| set
-	      invnumber = |.$dbh->quote($invnumber).qq|,
+	my $voucherid = 'NULL';
+
+	if ( $form->{batch} ) {
+		$form->{vouchernumber} =
+		  $form->update_defaults( $myconfig, 'vouchernumber', $dbh )
+		  unless $form->{vouchernumber};
+
+		if ( !( $voucherid = $form->{voucherid} ) ) {
+			$query = qq|SELECT nextval('id')|;
+			($voucherid) = $dbh->selectrow_array($query);
+		}
+	}
+
+	my $invnumber = $form->{invnumber};
+	$invnumber =
+	  $form->update_defaults( $myconfig,
+		( $form->{arap} eq 'ar' ) ? "sinumber" : "vinumber", $dbh )
+	  unless $invnumber;
+
+	$query = qq|UPDATE | . $form->dbclean( $form->{arap} ) . qq| set
+	      invnumber = | . $dbh->quote($invnumber) . qq|,
 	      $form->{vc}_id = $form->{"$form->{vc}_id"},
 	      transdate = '$form->{datepaid}',
 	      datepaid = '$form->{datepaid}',
@@ -70,70 +80,70 @@ sub overpayment {
 	      netamount = 0,
 	      amount = 0,
 	      paid = $fxamount,
-	      curr = |.$dbh->quote($form->{currency}).qq|,
+	      curr = | . $dbh->quote( $form->{currency} ) . qq|,
 	      department_id = $department_id,
-	      bank_id = (SELECT id FROM chart WHERE accno = |.$dbh->quote($paymentaccno).qq|)
-	      WHERE id = |.$form->dbclean($uid).qq||;
-  $dbh->do($query) || $form->dberror($query);
+	      bank_id = (SELECT id FROM chart WHERE accno = |
+	  . $dbh->quote($paymentaccno) . qq|)
+	      WHERE id = | . $form->dbclean($uid) . qq||;
+	$dbh->do($query) || $form->dberror($query);
 
-  # add AR/AP
-  my ($accno) = split /--/, $form->{$form->{ARAP}};
-  
-  $query = qq|INSERT INTO acc_trans (trans_id, chart_id, transdate, amount,
+	# add AR/AP
+	my ($accno) = split /--/, $form->{ $form->{ARAP} };
+
+	$query = qq|INSERT INTO acc_trans (trans_id, chart_id, transdate, amount,
               approved, vr_id)
-	      VALUES (|.$form->dbclean($uid).qq|, (SELECT id FROM chart
-			     WHERE accno = |.$dbh->quote($accno).qq|),
+	      VALUES (| . $form->dbclean($uid) . qq|, (SELECT id FROM chart
+			     WHERE accno = | . $dbh->quote($accno) . qq|),
 	      '$form->{datepaid}', $fxamount * $ml, '$approved', $voucherid)|;
-  $dbh->do($query) || $form->dberror($query);
+	$dbh->do($query) || $form->dberror($query);
 
-  # add payment
-  $query = qq|INSERT INTO acc_trans (trans_id, chart_id, transdate,
+	# add payment
+	$query = qq|INSERT INTO acc_trans (trans_id, chart_id, transdate,
 	      amount, source, memo, approved, vr_id)
-	      VALUES (|.$form->dbclean($uid).qq|, (SELECT id FROM chart
-			     WHERE accno = |.$dbh->quote($paymentaccno).qq|),
+	      VALUES (| . $form->dbclean($uid) . qq|, (SELECT id FROM chart
+			     WHERE accno = | . $dbh->quote($paymentaccno) . qq|),
 		'$form->{datepaid}', $amount * $ml * -1, |
-		.$dbh->quote($form->{source}).qq|, |
-		.$dbh->quote($form->{memo}).qq|, '$approved', $voucherid)|;
-  $dbh->do($query) || $form->dberror($query);
+	  . $dbh->quote( $form->{source} ) . qq|, |
+	  . $dbh->quote( $form->{memo} )
+	  . qq|, '$approved', $voucherid)|;
+	$dbh->do($query) || $form->dberror($query);
 
-  # add exchangerate difference
-  if ($fxamount != $amount) {
-    $query = qq|INSERT INTO acc_trans (trans_id, chart_id, transdate,
+	# add exchangerate difference
+	if ( $fxamount != $amount ) {
+		$query = qq|INSERT INTO acc_trans (trans_id, chart_id, transdate,
 		amount, cleared, fx_transaction, source, approved, vr_id)
-		VALUES (|.$form->dbclean($uid).qq|, (SELECT id FROM chart
-			       WHERE accno = |.$dbh->quote($paymentaccno).qq|),
+		VALUES (| . $form->dbclean($uid) . qq|, (SELECT id FROM chart
+			       WHERE accno = | . $dbh->quote($paymentaccno) . qq|),
 	        '$form->{datepaid}', ($fxamount - $amount) * $ml * -1,
 	        '$form->{datepaid}', '1', |
-		.$dbh->quote($form->{source}).qq|, '$approved', $voucherid)|;
-    $dbh->do($query) || $form->dberror($query);
-  }
+		  . $dbh->quote( $form->{source} ) . qq|, '$approved', $voucherid)|;
+		$dbh->do($query) || $form->dberror($query);
+	}
 
-  # add voucher
-  if ($form->{batch}) {
-    $query = qq|INSERT INTO vr (br_id, trans_id, id, vouchernumber)
+	# add voucher
+	if ( $form->{batch} ) {
+		$query = qq|INSERT INTO vr (br_id, trans_id, id, vouchernumber)
                 VALUES ($batchid, $uid, $voucherid, |
-		.$dbh->quote($form->{vouchernumber}).qq|)|;
-    $dbh->do($query) || $form->dberror($query);
+		  . $dbh->quote( $form->{vouchernumber} ) . qq|)|;
+		$dbh->do($query) || $form->dberror($query);
 
-    # update batch
-    $form->update_balance($dbh,
-                          'br',
-			  'amount',
-			  qq|id = $batchid|,
-			  $fxamount);
+		# update batch
+		$form->update_balance( $dbh, 'br', 'amount', qq|id = $batchid|,
+			$fxamount );
 
-  }
-  
-  my %audittrail = ( tablename  => $form->{arap},
-                     reference  => $invnumber,
-		     formname   => ($form->{arap} eq 'ar') ? 'deposit' : 'pre-payment',
-		     action     => $action,
-		     id         => $uid );
- 
-  $form->audittrail($dbh, "", \%audittrail);
-  
+	}
+
+	my %audittrail = (
+		tablename => $form->{arap},
+		reference => $invnumber,
+		formname  => ( $form->{arap} eq 'ar' ) ? 'deposit' : 'pre-payment',
+		action    => $action,
+		id        => $uid
+	);
+
+	$form->audittrail( $dbh, "", \%audittrail );
+
 }
-
 
 1;
 
