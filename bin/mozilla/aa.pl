@@ -843,7 +843,7 @@ qq|<textarea name="description" rows=$rows cols=60 wrap=soft>$form->{description
 	      $department
 	      $employee
 	      <tr>
-		<th align=right nowrap>| . $locale->text('Invoice Number') . qq|</th>
+		<th align=right nowrap>| . $locale->text('Invoice N.') . qq|</th>
 		<td><input name=invnumber size=20 value="|
 	  . $form->quote( $form->{invnumber} )
 	  . qq|"></td>
@@ -2754,7 +2754,7 @@ sub transactions {
 	if ( $form->{vc} eq 'customer' ) {
 		$employee   = $locale->text('Salesperson');
 		$name       = $locale->text('Customer');
-		$namenumber = $locale->text('Customer Number');
+		$namenumber = $locale->text('Customer N.');
 		$namefld    = "customernumber";
 	}
 	else {
@@ -2813,7 +2813,7 @@ sub transactions {
 	  . "</a></th>";
 	$column_data{datepaid} =
 	    "<th><a class=listheading href=$href&sort=datepaid>"
-	  . $locale->text('Date Paid')
+	  . $locale->text('Date p.')
 	  . "</a></th>";
 	$column_data{due} =
 	  "<th class=listheading>" . $locale->text('Due') . "</th>";
@@ -2860,7 +2860,7 @@ sub transactions {
 
 	$column_data{curr} =
 	    "<th><a class=listheading href=$href&sort=curr>"
-	  . $locale->text('Curr')
+	  . $locale->text('Curr.')
 	  . "</a></th>";
 	for (qw(amount tax netamount paid due)) {
 		$column_data{"fx_$_"} = "<th>&nbsp;</th>";
