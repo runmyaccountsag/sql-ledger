@@ -11,7 +11,6 @@ use Module::CoreList;
 use CPAN::Version;
 use File::Find;
 
-
 # At the moment, we only take care of Debian.
 # The dist.json only contains hints for Debian packages.
 
@@ -19,38 +18,28 @@ use File::Find;
 
 # grep -rh "^use " | grep -v SL | awk '{print $2}' | grep '^[A-Z]' | sed 's/;//' | sort -u | xargs corelist | grep 'not in CORE'
 
-
 my @fully_supported_linuxes = qw(debian);
 
+my %pkg_manager_map = ( debian => "aptitude", );
 
-my %pkg_manager_map = (
-    debian   => "aptitude",
-);
-
-my %cpanm_packages = (
-    debian   => "cpanminus make",
-);
+my %cpanm_packages = ( debian => "cpanminus make", );
 
 my $cpan_install_cmd = "cpanm";
 
-
-
 # We use plain Perl, no requirements:
 say "Content-type: text/html";
-
 
 our $enable_setup_check = 1;
 
 eval { require "sql-ledger.conf" };
 
-if (!$enable_setup_check) {
-    say "Status: 403 Forbidden\n";
-    say "\n<h1>Forbidden</h1>";
-    exit;
+if ( !$enable_setup_check ) {
+	say "Status: 403 Forbidden\n";
+	say "\n<h1>Forbidden</h1>";
+	exit;
 }
 
 print "\n";
-
 
 say qq|<!DOCTYPE html>
 <html>
@@ -109,25 +98,23 @@ as Perl modules / distribution packages / executables).
 </p>
 |;
 
+my ( $os_pretty_name, $os_id, $os_version_id ) = get_os_release();
 
-my ($os_pretty_name, $os_id, $os_version_id) = get_os_release();
 # PRETTY_NAME="Debian GNU/Linux 9 (stretch)"
 # ID=debian
 # VERSION_ID="9"
 
-
 say "<p>Your operating system: <b>$os_pretty_name</b>.</p>";
 
-if ($os_id eq "unknown") {
+if ( $os_id eq "unknown" ) {
 
-    say "<p>Sorry, we cannot handle unknown Linuxes :-(</p>";
-    exit 1;
+	say "<p>Sorry, we cannot handle unknown Linuxes :-(</p>";
+	exit 1;
 }
 
+if ( grep { $_ eq $os_id } @fully_supported_linuxes ) {
 
-if (grep { $_ eq $os_id } @fully_supported_linuxes) {
-
-say qq|
+	say qq|
 <p>
 In case of missing requirements we make suggestions based on:
 <ul>
@@ -147,7 +134,6 @@ $pkg_manager_map{$os_id} install $cpanm_packages{$os_id}
 |;
 }
 
-
 say qq|
 
 <p>
@@ -158,62 +144,49 @@ to &nbsp;<span class="tt">sql-ledger.conf</span>!
 <hr/><br/>
 |;
 
-
-
 my $dist = parse_config();
-
-
-
-
-
 
 my @missing_cpan_modules;
 my @missing_dist_packages;
 
-
 say "<table  class='result'>";
 
-foreach my $r (sort { $a->{name} cmp $b->{name} }  @$dist) {
+foreach my $r ( sort { $a->{name} cmp $b->{name} } @$dist ) {
 
-    my $result = check_requirement($r);
-    
-    say "<tr>";
+	my $result = check_requirement($r);
 
-    say "<td>$result->{desc}</td>";
+	say "<tr>";
 
-    my $css_class = $result->{ok} ? 'ok' : 'fail';
+	say "<td>$result->{desc}</td>";
 
-    say "<td class='$css_class'>$result->{info}</td>";
-    
-    say "</tr>";
+	my $css_class = $result->{ok} ? 'ok' : 'fail';
+
+	say "<td class='$css_class'>$result->{info}</td>";
+
+	say "</tr>";
 }
 
 say "</table><br/>";
 
+if ( my @somehow_used_modules = get_somehow_used_modules() ) {
+	say "<hr/>";
 
-if (my @somehow_used_modules = get_somehow_used_modules()) {
-    say "<hr/>";
+	say "<p>FYI: Other somehow used modules:";
 
-    say "<p>FYI: Other somehow used modules:";
+	say "<pre>";
 
-    say "<pre>";
-    
-    say foreach  @somehow_used_modules;
+	say foreach @somehow_used_modules;
 
-    say "</pre></p>";
+	say "</pre></p>";
 }
 
-
-
-if (@missing_dist_packages || @missing_cpan_modules) {
-    say "<hr/>";
+if ( @missing_dist_packages || @missing_cpan_modules ) {
+	say "<hr/>";
 }
-
-
 
 if (@missing_dist_packages) {
 
-    say qq|
+	say qq|
 <p>Install missing distribution packages with:</p>
 <div class='install_hint'>
 $pkg_manager_map{$os_id} install @missing_dist_packages
@@ -223,7 +196,7 @@ $pkg_manager_map{$os_id} install @missing_dist_packages
 
 if (@missing_cpan_modules) {
 
-    say qq|
+	say qq|
 <p>If your distro does not provide suitable packages, install missing CPAN modules with:</p>
 <div class='install_hint'>
 $cpan_install_cmd @missing_cpan_modules
@@ -231,197 +204,177 @@ $cpan_install_cmd @missing_cpan_modules
 |;
 }
 
-
-
 say qq|
 </body>
 </html>
 |;
 
-
 exit 0;
 
-
-
 ################################# End main #################################
-
-
 
 ####################
 sub get_os_release {
 ####################
-    open(my $osrelease, "<", "/etc/os-release") ||
-        return ("unknown", "unknown", "unknown");
+	open( my $osrelease, "<", "/etc/os-release" )
+	  || return ( "unknown", "unknown", "unknown" );
 
-    my %keys;
-    
-    while (<$osrelease>) {
-        m/^(\w+)=["']?(.+?)["']?$/;
-        $keys{$1} = $2;
-    }
+	my %keys;
 
-    return ($keys{PRETTY_NAME}, $keys{ID}, $keys{VERSION_ID});
+	while (<$osrelease>) {
+		m/^(\w+)=["']?(.+?)["']?$/;
+		$keys{$1} = $2;
+	}
+
+	return ( $keys{PRETTY_NAME}, $keys{ID}, $keys{VERSION_ID} );
 }
-
-
 
 ##################
 sub parse_config {
 ##################
-    local $/;
-    open( my $conf, '<', 'dist.json' );
-    my $json_text   = <$conf>;
-    close $conf;
-    return decode_json( $json_text );
+	local $/;
+	open( my $conf, '<', 'dist.json' );
+	my $json_text = <$conf>;
+	close $conf;
+	return decode_json($json_text);
 }
-
-
 
 #######################
 sub check_requirement {
 #######################
-    my $r = shift;
+	my $r = shift;
 
-    my %type_map = (
-        perlmodule => "Perl module",
-        executable => "Executable",
-    );
+	my %type_map = (
+		perlmodule => "Perl module",
+		executable => "Executable",
+	);
 
-    
-    if ($r->{type} eq "perlmodule") {
+	if ( $r->{type} eq "perlmodule" ) {
 
-        my $loadable   = 0;
-        my $version_ok = 0;
-        my $info;
-        
-        eval { load $r->{name} };
+		my $loadable   = 0;
+		my $version_ok = 0;
+		my $info;
 
-        $loadable = 1 unless $@;
-        
-        if ($loadable) {
-            my $version = "$r->{name}"->VERSION();
+		eval { load $r->{name} };
 
-            if (CPAN::Version->vcmp($version, $r->{version}) >= 0) {
-                # 1: first is larger, 0: equal
-                
-                $version_ok = 1;
-                $info = "Installed version: $version";
-            }
-            else {
-                $info = "Installed in version $version, " .
-                    "but we need $r->{version}";
-            }
-        }
-        else {
-            $info = "Not installed";
-            $info .= " (required version: $r->{version})" if $r->{version};
-        }
+		$loadable = 1 unless $@;
 
-        if (!$loadable || !$version_ok) {
-            if (my $p = get_package($r)) {
-                push @missing_dist_packages, $p;
-            }
-            else {
-                push @missing_cpan_modules,
-                    $r->{name} . ($r->{version} ne "0"? "\@$r->{version}" : "");
-            }
-        }
+		if ($loadable) {
+			my $version = "$r->{name}"->VERSION();
 
-        return {
-            desc => $type_map{ $r->{type} } . ": " . $r->{name},
-            ok   =>  $loadable && $version_ok,
-            info => $info,
-        }
-    }
-    
-    elsif ($r->{type} eq "executable") {
+			if ( CPAN::Version->vcmp( $version, $r->{version} ) >= 0 ) {
 
-        my $is_in_path = 0;
-        my $info;
+				# 1: first is larger, 0: equal
 
-        my @found;
-        if (@found = grep { -x "$_/$r->{name}" } split /:/, $ENV{PATH}) {
-            $is_in_path = 1;
-        }
+				$version_ok = 1;
+				$info       = "Installed version: $version";
+			}
+			else {
+				$info = "Installed in version $version, "
+				  . "but we need $r->{version}";
+			}
+		}
+		else {
+			$info = "Not installed";
+			$info .= " (required version: $r->{version})" if $r->{version};
+		}
 
-        if ($is_in_path) {
-            $info = "$r->{name} is in $found[0]";
-        }
-        else {
-            $info = "Not found";
-            if (my $p = get_package($r)) {
-                push @missing_dist_packages, $p;
-            }
-            else {
-                die "No package configured";
-            }
-        }
-        
-        return {
-            desc => $type_map{ $r->{type} } . ": " . $r->{name},
-            ok   =>  $is_in_path,
-            info => $info,
-        }
-    }
-    else {
-        die "Unknown type";
-    }
+		if ( !$loadable || !$version_ok ) {
+			if ( my $p = get_package($r) ) {
+				push @missing_dist_packages, $p;
+			}
+			else {
+				push @missing_cpan_modules,
+				  $r->{name}
+				  . ( $r->{version} ne "0" ? "\@$r->{version}" : "" );
+			}
+		}
+
+		return {
+			desc => $type_map{ $r->{type} } . ": " . $r->{name},
+			ok   => $loadable && $version_ok,
+			info => $info,
+		};
+	}
+
+	elsif ( $r->{type} eq "executable" ) {
+
+		my $is_in_path = 0;
+		my $info;
+
+		my @found;
+		if ( @found = grep { -x "$_/$r->{name}" } split /:/, $ENV{PATH} ) {
+			$is_in_path = 1;
+		}
+
+		if ($is_in_path) {
+			$info = "$r->{name} is in $found[0]";
+		}
+		else {
+			$info = "Not found";
+			if ( my $p = get_package($r) ) {
+				push @missing_dist_packages, $p;
+			}
+			else {
+				die "No package configured";
+			}
+		}
+
+		return {
+			desc => $type_map{ $r->{type} } . ": " . $r->{name},
+			ok   => $is_in_path,
+			info => $info,
+		};
+	}
+	else {
+		die "Unknown type";
+	}
 }
-
-
 
 #################
 sub get_package {
 #################
-    my $r = shift;
+	my $r = shift;
 
-    if ( $r->{package} ) {
-        return $r->{package}{"$os_id$os_version_id"}
-            // $r->{package}{$os_id};
-    }
+	if ( $r->{package} ) {
+		return $r->{package}{"$os_id$os_version_id"} // $r->{package}{$os_id};
+	}
 }
-
-
 
 ##############################
 sub get_somehow_used_modules {
 ##############################
 
-    my %overall_used_modules;
-    my @whitelist = (
-        qr/^\$0$/,
-        qr/^(strict|warnings|utf8|v5\.10)$/,
-        qr/^SL::.*/,
-        qr/^GD::Graph::.*/,
-        qr/^Mojo::(File|Home|Base)$/,
-        qr/^Mojolicious::(Commands|Static)$/,
-    );
+	my %overall_used_modules;
+	my @whitelist = (
+		qr/^\$0$/,                    qr/^(strict|warnings|utf8|v5\.10)$/,
+		qr/^SL::.*/,                  qr/^GD::Graph::.*/,
+		qr/^Mojo::(File|Home|Base)$/, qr/^Mojolicious::(Commands|Static)$/,
+	);
 
+	my @known_required_modules =
+	  map { $_->{name} } grep { $_->{type} eq 'perlmodule' } @$dist;
 
-    my @known_required_modules =
-        map { $_->{name} } grep { $_->{type} eq 'perlmodule' } @$dist;
+	my $wanted = sub {
+		return unless -f;
 
+		open( my $file, "<", $_ ) || warn $!;
 
-    my $wanted = sub {
-        return unless -f;
+		while (<$file>) {
+			chomp;
+			if ( my ($used) = m/^use\s+(\S+)(\s+|;)/ ) {
+				if (   ( !grep { $used =~ $_ } @whitelist )
+					&& ( !grep { $used eq $_ } @known_required_modules )
+					&& ( !Module::CoreList::is_core($used) ) )
+				{
+					$overall_used_modules{$1} = 1;
+				}
+			}
+		}
+		close $file;
+	};
 
-        open(my $file, "<", $_) || warn $!;
-        
-        while (<$file>) {
-            chomp;
-            if (my ($used) = m/^use\s+(\S+)(\s+|;)/) {
-                if ((!grep { $used =~ $_ } @whitelist)
-                     && (!grep { $used eq $_ } @known_required_modules)
-                     && (!Module::CoreList::is_core($used))
-                    ) {
-                    $overall_used_modules{$1} = 1;
-                }
-            }
-        }
-        close $file;
-    };
-    
-    find($wanted, getcwd);
-    
-    return sort keys %overall_used_modules;
+	find( $wanted, getcwd );
+
+	return sort keys %overall_used_modules;
 }
