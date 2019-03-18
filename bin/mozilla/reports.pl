@@ -2038,8 +2038,7 @@ $selectfrom
 <tr>
     <th>&nbsp;</th>
     <td><input name=l_csv type=checkbox class=checkbox value=1> |
-	  . $locale->text('CSV Export')
-	  . qq|</td>
+	  . $locale->text('CSV Export') . qq|</td>
 </tr>
 <tr>
 <th>| . $locale->text('Include') . qq|:</th>
@@ -2070,7 +2069,11 @@ $selectfrom
 	$sth->execute || $form->dberror($query);
 	while ( my $ref = $sth->fetchrow_hashref(NAME_lc) ) {
 		print
-qq|<input name=p_$ref->{id} type=checkbox class=checkbox value=1>$ref->{description}<br>\n|;
+qq|<input name=p_$ref->{id} type=checkbox class=checkbox value=1>$ref->{description}|;
+		if ( $ref->{projectnumber} ) {
+			print qq| ($ref->{projectnumber})|;
+		}
+		print qq|<br>\n|;
 	}
 
 	print qq|
@@ -2146,8 +2149,8 @@ sub income_statement_by_project {
 	$form->header;
 	print
 qq|<body><table width=100%><tr><th class=listtop>$form->{title}</th></tr></table><br/>|;
-	print qq|<h4>INCOME STATEMENT</h4>|;
-	print qq|<h4>for Period</h4>|;
+	print qq|<h4>|.$locale->text('Income Statement Projects').qq|</h4>|;
+	print qq|<h4>|.$locale->text('For Period').qq|</h4>|;
 	print qq|<h4>|
 	  . $locale->text('From')
 	  . "&nbsp;"
@@ -2223,7 +2226,7 @@ qq|SUM(CASE WHEN ac.project_id = $projects{$key}->{id} THEN ac.amount ELSE 0 END
 
 	# Print INCOME
 	print
-qq|<tr><td colspan=2><b>INCOME<br><hr width=300 size=5 align=left noshade></b></td></tr>|;
+qq|<tr><td colspan=2><b>|.$locale->text('INCOME').qq|<br><hr width=300 size=5 align=left noshade></b></td></tr>|;
 	foreach $accno ( sort keys %{ $form->{I} } ) {
 		print qq|<tr>|;
 		print qq|<td>$form->{I}{$accno}{accno}</td>|;
@@ -2246,7 +2249,7 @@ qq|<tr><td colspan=2><b>INCOME<br><hr width=300 size=5 align=left noshade></b></
 	print qq|</tr>|;
 
 	$line_total = 0;
-	print qq|<tr><td colspan=2 align=right><b>TOTAL INCOME</b></td>|;
+	print qq|<tr><td colspan=2 align=right><b>|.$locale->text('TOTAL INCOME').qq|</b></td>|;
 	for ( sort keys %projects ) {
 		print qq|<td align=right>|
 		  . $form->format_amount( \%myconfig, $form->{I}{$_}{totalincome}, 0 )
@@ -2264,7 +2267,7 @@ qq|<tr><td colspan=2><b>INCOME<br><hr width=300 size=5 align=left noshade></b></
 
 	# Print EXPENSES
 	print
-qq|<tr><td colspan=2><b>EXPENSES<br><hr width=300 size=5 align=left noshade></b></td></tr>|;
+qq|<tr><td colspan=2><b>|.$locale->text('EXPENSES').qq|<br><hr width=300 size=5 align=left noshade></b></td></tr>|;
 	foreach $accno ( sort keys %{ $form->{E} } ) {
 		print qq|<tr>|;
 		print qq|<td>$form->{E}{$accno}{accno}</td>|;
@@ -2288,7 +2291,7 @@ qq|<tr><td colspan=2><b>EXPENSES<br><hr width=300 size=5 align=left noshade></b>
 	print qq|</tr>|;
 
 	$line_total = 0;
-	print qq|<tr><td colspan=2 align=right><b>TOTAL EXPENSES</b></td>|;
+	print qq|<tr><td colspan=2 align=right><b>|.$locale->text('TOTAL EXPENSES').qq|</b></td>|;
 	for ( sort keys %projects ) {
 		print qq|<td align=right>|
 		  . $form->format_amount( \%myconfig, $form->{E}{$_}{totalexpenses}, 0 )
@@ -2305,7 +2308,7 @@ qq|<tr><td colspan=2><b>EXPENSES<br><hr width=300 size=5 align=left noshade></b>
 	print qq|</tr>|;
 
 	$line_total = 0;
-	print qq|<tr><td colspan=2 align=right><b>INCOME (LOSS)</b></td>|;
+	print qq|<tr><td colspan=2 align=right><b>|.$locale->text('INCOME (LOSS)').qq|</b></td>|;
 	for ( sort keys %projects ) {
 		print qq|<td align=right>|
 		  . $form->format_amount( \%myconfig,
@@ -2610,8 +2613,7 @@ sub aa_qty_search {
 
 			$selectfrom .= qq|
               <td nowrap><input name="l_month_$i" class checkbox type=checkbox value=Y checked>&nbsp;|
-			  . $locale->text( $form->{all_month}{$_} )
-			  . qq|</td>\n|;
+			  . $locale->text( $form->{all_month}{$_} ) . qq|</td>\n|;
 		}
 
 		$selectfrom .= qq|
@@ -4282,11 +4284,9 @@ sub trans_search {
         <td><table>
         <tr>
           <td><input name=summary type=radio class=radio value=1 checked> |
-	  . $locale->text('Summary')
-	  . qq|</td>
+	  . $locale->text('Summary') . qq|</td>
           <td><input name=summary type=radio class=radio value=0> |
-	  . $locale->text('Detail')
-	  . qq|</td>
+	  . $locale->text('Detail') . qq|</td>
             </tr>
 |;
 
@@ -4654,8 +4654,8 @@ sub trans_list {
 	while ( my $ref = $sth->fetchrow_hashref(NAME_lc) ) {
 		$module =
 		    ( $ref->{invoice} )
-		  ? ( $form->{aa} eq 'AR' ) 
-			  ? "is.pl" 
+		  ? ( $form->{aa} eq 'AR' )
+			  ? "is.pl"
 			  : "ir.pl"
 		  : "$table.pl";
 		$module = ( $ref->{till} ) ? "ps.pl" : $module;
