@@ -43,6 +43,7 @@ insert into chart (accno,description,charttype,category,link,gifi_accno,contra,a
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('1300','Bezahlter Aufwand des Folgejahrs','A','A','','130',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('1301','Noch nicht erhaltener Ertrag','A','A','','130',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('1302','Arbeitgeberbeitragsreserve','A','A','','130',false,true,'');
+insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('1310','Aktive Rechnungsabgrenzung Kreditoren','A','A','','130',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('14','ANLAGEVERMÖGEN','H','A','','140',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('140','FINANZANLAGEN','H','A','','140',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('1400','Wertschriften des Anlagevermögens','A','A','','140',false,true,'');
@@ -93,6 +94,7 @@ insert into chart (accno,description,charttype,category,link,gifi_accno,contra,a
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('230','PASSIVE RECHNUNGSABGRENZUNG UND KURZFRISTIGE RÜCKSTELLUNGEN','H','L','','230',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('2300','Noch nicht bezahlter Aufwand','A','L','','230',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('2301','Erhaltener Ertrag des Folgejahrs','A','L','','230',false,true,'');
+insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('2310', 'Passive Rechnungsabgrenzung Kreditoren','A','L','','230',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('2330','Kurzfristige Rückstellungen','A','L','','230',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('24','LANGFRISTIGES FREMDKAPITAL','H','L','','240',false,true,'');
 insert into chart (accno,description,charttype,category,link,gifi_accno,contra,allow_gl,symbol_link) values ('240','LANGFRISTIGE VERZINSLICHE VERBINDLICHKEITEN','H','L','','240',false,true,'');
