@@ -2121,6 +2121,8 @@ sub retrieve_invoice {
 		qw(inventory_accno income_accno expense_accno fxgain_accno fxloss_accno)
 	  )
 	{
+		next if !$form->{id} || $form->{id} eq '';
+
 		$query = qq|SELECT accno FROM chart
 		WHERE id = $defaults{"${_}_id"}|;
 		( $form->{$_} ) = $dbh->selectrow_array($query);
