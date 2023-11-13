@@ -1401,7 +1401,7 @@ qq|<input name="db$key" class=checkbox type=checkbox value=1 checked> $key\n|;
 		  "$form->{script}?action=list_users&path=$form->{path}";
 		$form->{nextsub} = "dbupdate";
 		$form->hide_form(
-			qw(dbdriver dbhost dbport dbuser dbpasswd dbdefault dbupdate mextsub callback path)
+			qw(dbdriver dbhost dbport dbuser dbpasswd dbdefault dbupdate nextsub callback path)
 		);
 
 		print qq|
